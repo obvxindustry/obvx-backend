@@ -15,9 +15,14 @@ public class SupabaseStorageService {
     private final SupabaseConfig supabaseConfig;
     private final RestTemplate restTemplate;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public SupabaseStorageService(SupabaseConfig supabaseConfig) {
+        this(supabaseConfig, new RestTemplate());
+    }
+
+    public SupabaseStorageService(SupabaseConfig supabaseConfig, RestTemplate restTemplate) {
         this.supabaseConfig = supabaseConfig;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
     public String uploadImage(MultipartFile file) throws IOException {

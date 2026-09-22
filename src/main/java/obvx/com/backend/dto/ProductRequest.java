@@ -28,7 +28,6 @@ public class ProductRequest {
     @PositiveOrZero(message = "Ce champs doit superieur ou égale à zero")
     private Integer stock;
 
-    @NotNull(message = "image is required")
     private MultipartFile image;
 
     private String imageUrl;

@@ -58,15 +58,9 @@ public class ProductsController {
     }
 
     // UPDATE PRODUCT
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(
-            @PathVariable Long id,
-            @Valid @RequestBody ProductRequest request
-    ) {
-
-        return ResponseEntity.ok(
-                productsService.updateProducts(id, request)
-        );
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<ProductResponse> updateProduct( @PathVariable Long id, @RequestPart("products") @Valid ProductRequest request, @RequestPart(value = "image", required = false) MultipartFile image ) throws IOException {
+        return ResponseEntity.ok( productsService.updateProducts(id, request, image) );
     }
 
     // DELETE PRODUCT
