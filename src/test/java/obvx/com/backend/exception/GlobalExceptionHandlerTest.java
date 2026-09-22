@@ -26,7 +26,7 @@ class GlobalExceptionHandlerTest {
     void handleRessourceNotFound_returnsNotFound() {
         RessourceNotFoundException ex = new RessourceNotFoundException("Category not found");
 
-        ResponseEntity<ErrorReponse> response = exceptionHandler.handleRessourceNotFound(ex);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleRessourceNotFound(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isNotNull();
@@ -44,7 +44,7 @@ class GlobalExceptionHandlerTest {
 
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
 
-        ResponseEntity<ErrorReponse> response = exceptionHandler.handleValidationException(ex);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleValidationException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
@@ -61,7 +61,7 @@ class GlobalExceptionHandlerTest {
 
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
 
-        ResponseEntity<ErrorReponse> response = exceptionHandler.handleValidationException(ex);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleValidationException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();

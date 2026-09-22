@@ -99,13 +99,22 @@ public class ProductsService {
         product.setStock(request.getStock());
         product.setCategory(category);
 
-        // Si une nouvelle image est envoyée
         if (image != null && !image.isEmpty()) {
 
-            String imageUrl =
+            // Sauvegarder l'ancienne URL
+            String oldImageUrl = product.getImageUrl();
+
+            // Upload de la nouvelle image
+            String newImageUrl =
                     supabaseStorageService.uploadImage(image);
 
-            product.setImageUrl(imageUrl);
+            // Mettre à jour l'URL en base
+            product.setImageUrl(newImageUrl);
+
+            // Supprimer l'ancienne image de Supabase
+            if (oldImageUrl != null && !oldImageUrl.isBlank()) {
+                supabaseStorageService.deleteImage(oldImageUrl);
+            }
         }
 
         Products updatedProduct = productRepository.save(product);
@@ -114,9 +123,22 @@ public class ProductsService {
     }
 
     public void deleteProducts(Long id) {
-        Products product = productRepository.findById(id)
-                .orElseThrow(() -> new RessourceNotFoundException("Product not found"));
 
+        Products product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new RessourceNotFoundException("Product not found")
+                );
+
+        // Supprimer l'image de Supabase
+        if (product.getImageUrl() != null &&
+                !product.getImageUrl().isBlank()) {
+
+            supabaseStorageService.deleteImage(
+                    product.getImageUrl()
+            );
+        }
+
+        // Supprimer le produit de PostgreSQL
         productRepository.delete(product);
     }
 

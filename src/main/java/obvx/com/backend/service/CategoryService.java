@@ -4,6 +4,7 @@ import obvx.com.backend.dto.CategoryRequest;
 import obvx.com.backend.entity.Category;
 import obvx.com.backend.exception.RessourceNotFoundException;
 import obvx.com.backend.repository.CategoryRepository;
+import obvx.com.backend.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,10 +13,12 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, ProductRepository productRepository) {
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
     }
 
     public Category createCategory(CategoryRequest request) {
@@ -47,11 +50,22 @@ public class CategoryService {
         return categoryRepository.save(existingCategory);
     }
 
-    public void deleteCategory(Long id){
+    public void deleteCategory(Long id) {
+
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() ->
                         new RessourceNotFoundException("Catégorie introuvable")
                 );
+
+        long productCount = productRepository.countByCategoryId(id);
+
+        if (productCount > 0) {
+            throw new IllegalStateException(
+                    "Impossible de supprimer cette catégorie car elle contient "
+                            + productCount
+                            + " produit(s)"
+            );
+        }
 
         categoryRepository.delete(category);
     }
