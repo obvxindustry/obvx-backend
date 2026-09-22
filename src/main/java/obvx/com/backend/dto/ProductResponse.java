@@ -30,6 +30,13 @@ public class ProductResponse {
         this.category = category;
     }
 
-    public ProductResponse(Long id, String name, String description, BigDecimal price, Integer stock, String imageUrl, Long id1, String name1) {
+    public ProductResponse(Long id, String name, String description, BigDecimal price, Integer stock, String imageUrl, Long categoryId, String categoryName) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
+        this.imageUrl = imageUrl;
+        this.category = Category.builder().id(categoryId).name(categoryName).build();
     }
 }

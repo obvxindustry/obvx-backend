@@ -80,20 +80,33 @@ public class ProductsService {
         return mapToResponse(product);
     }
 
-    public ProductResponse updateProducts(Long id, ProductRequest request) {
+    public ProductResponse updateProducts(Long id, ProductRequest request, MultipartFile image) throws IOException {
 
         Products product = productRepository.findById(id)
-                .orElseThrow(() -> new RessourceNotFoundException("Product not found"));
+                .orElseThrow(() ->
+                        new RessourceNotFoundException("Product not found")
+                );
 
-        Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RessourceNotFoundException("Category not found"));
+        Category category = categoryRepository.findById(
+                request.getCategoryId()
+        ).orElseThrow(() ->
+                new RessourceNotFoundException("Category not found")
+        );
 
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
-        product.setImageUrl(request.getImageUrl());
         product.setCategory(category);
+
+        // Si une nouvelle image est envoyée
+        if (image != null && !image.isEmpty()) {
+
+            String imageUrl =
+                    supabaseStorageService.uploadImage(image);
+
+            product.setImageUrl(imageUrl);
+        }
 
         Products updatedProduct = productRepository.save(product);
 
@@ -101,9 +114,8 @@ public class ProductsService {
     }
 
     public void deleteProducts(Long id) {
-
         Products product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new RessourceNotFoundException("Product not found"));
 
         productRepository.delete(product);
     }
