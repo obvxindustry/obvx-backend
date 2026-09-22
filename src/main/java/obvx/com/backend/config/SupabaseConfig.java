@@ -14,7 +14,7 @@ public class SupabaseConfig {
     @Value("${supabase.key}")
     private String key;
 
-    @Value("${supabase.url}")
+    @Value("${supabase.bucket}")
     private String bucket;
 
 }

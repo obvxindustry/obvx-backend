@@ -5,9 +5,11 @@ import obvx.com.backend.dto.ProductRequest;
 import obvx.com.backend.dto.ProductResponse;
 import obvx.com.backend.service.ProductsService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,11 +25,30 @@ public class ProductsController {
     }
 
     // CREATE PRODUCT
-    @PostMapping
+//    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<ProductResponse> createProducts(
+//            @RequestPart("products") @Valid ProductRequest productRequest,
+//            @RequestPart("image") MultipartFile image
+//    ) throws IOException {
+//
+//        ProductResponse productResponse =
+//                productsService.createProduct(productRequest, image);
+//
+//        return ResponseEntity
+//                .status(HttpStatus.CREATED)
+//                .body(productResponse);
+//    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductResponse> createProducts(
-            @RequestPart("products") @Valid ProductRequest productRequest,
+            @RequestPart("products") String productsJson,
             @RequestPart("image") MultipartFile image
     ) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        ProductRequest productRequest =
+                objectMapper.readValue(productsJson, ProductRequest.class);
 
         ProductResponse productResponse =
                 productsService.createProduct(productRequest, image);
