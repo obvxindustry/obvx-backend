@@ -79,9 +79,13 @@ public class ProductsController {
     }
 
     // UPDATE PRODUCT
-    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
-    public ResponseEntity<ProductResponse> updateProduct( @PathVariable Long id, @RequestPart("products") @Valid ProductRequest request, @RequestPart(value = "image", required = false) MultipartFile image ) throws IOException {
-        return ResponseEntity.ok( productsService.updateProducts(id, request, image) );
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductResponse> updateProduct( @PathVariable Long id, @RequestPart("products") String productsJson, @RequestPart(value = "image", required = false) MultipartFile image ) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ProductRequest productRequest = objectMapper.readValue(productsJson, ProductRequest.class);
+        ProductResponse productResponse = productsService.updateProducts( id, productRequest, image );
+
+        return ResponseEntity.ok(productResponse);
     }
 
     // DELETE PRODUCT
