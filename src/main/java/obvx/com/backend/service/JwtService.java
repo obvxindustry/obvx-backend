@@ -1,5 +1,6 @@
 package obvx.com.backend.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import obvx.com.backend.entity.User;
@@ -36,5 +37,37 @@ public class JwtService {
                 )
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public String extractEmail(String token) {
+
+        return extractAllClaims(token).getSubject();
+    }
+
+    public boolean isTokenValid(
+            String token,
+            User user
+    ) {
+
+        String email = extractEmail(token);
+
+        return email.equals(user.getEmail())
+                && !isTokenExpired(token);
+    }
+
+    private boolean isTokenExpired(String token) {
+
+        return extractAllClaims(token)
+                .getExpiration()
+                .before(new Date());
+    }
+
+    private Claims extractAllClaims(String token) {
+
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

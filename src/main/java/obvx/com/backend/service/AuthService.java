@@ -72,4 +72,16 @@ public class AuthService {
                 token
         );
     }
+
+    public void makeAdmin(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Utilisateur introuvable")
+                );
+
+        user.setRole(Role.ADMIN);
+
+        userRepository.save(user);
+    }
 }
