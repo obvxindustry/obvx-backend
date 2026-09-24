@@ -7,6 +7,7 @@ import obvx.com.backend.service.ProductsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
@@ -39,6 +40,7 @@ public class ProductsController {
 //                .body(productResponse);
 //    }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductResponse> createProducts(
             @RequestPart("products") String productsJson,
@@ -79,6 +81,7 @@ public class ProductsController {
     }
 
     // UPDATE PRODUCT
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductResponse> updateProduct( @PathVariable Long id, @RequestPart("products") String productsJson, @RequestPart(value = "image", required = false) MultipartFile image ) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -89,6 +92,7 @@ public class ProductsController {
     }
 
     // DELETE PRODUCT
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable Long id
