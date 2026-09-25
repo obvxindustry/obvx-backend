@@ -1,5 +1,6 @@
 package obvx.com.backend.controller;
 
+import jakarta.validation.Valid;
 import obvx.com.backend.dto.AdminRequest;
 import obvx.com.backend.dto.UserResponse;
 import obvx.com.backend.service.AdminService;
@@ -21,7 +22,7 @@ public class AdminController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> createAdmin(
-            @RequestBody AdminRequest request
+            @Valid @RequestBody AdminRequest request
     ) {
         UserResponse response = adminService.createAdmin(request);
 
