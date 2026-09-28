@@ -1,8 +1,10 @@
 package obvx.com.backend.service;
 
+import jakarta.transaction.Transactional;
 import obvx.com.backend.dto.AddToCartRequest;
 import obvx.com.backend.dto.CartItemResponse;
 import obvx.com.backend.dto.CartResponse;
+import obvx.com.backend.dto.UpdateCartItemRequest;
 import obvx.com.backend.entity.Cart;
 import obvx.com.backend.entity.CartItem;
 import obvx.com.backend.entity.Products;
@@ -111,6 +113,61 @@ public class CartService {
         }
 
         cartItemRepository.save(cartItem);
+
+        return getOrCreateCart(user);
+    }
+
+    public CartResponse updateCartItem(User user, Long cartItemId, UpdateCartItemRequest request) {
+
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new RessourceNotFoundException("Panier non trouvé")
+                );
+
+        CartItem cartItem = cartItemRepository
+                .findByIdAndCartId(cartItemId, cart.getId())
+                .orElseThrow(() ->
+                        new RessourceNotFoundException(
+                                "Article du panier non trouvé"
+                        )
+                );
+
+        cartItem.setQuantity(request.quantity());
+
+        cartItemRepository.save(cartItem);
+
+        return getOrCreateCart(user);
+    }
+
+    public CartResponse deleteCartItem(User user, Long cartItemId) {
+
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new RessourceNotFoundException("Panier non trouvé")
+                );
+
+        CartItem cartItem = cartItemRepository
+                .findByIdAndCartId(cartItemId, cart.getId())
+                .orElseThrow(() ->
+                        new RessourceNotFoundException(
+                                "Article du panier non trouvé"
+                        )
+                );
+
+        cartItemRepository.delete(cartItem);
+
+        return getOrCreateCart(user);
+    }
+
+    @Transactional
+    public CartResponse clearCart(User user) {
+
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() ->
+                        new RessourceNotFoundException("Panier non trouvé")
+                );
+
+        cartItemRepository.deleteAllByCartId(cart.getId());
 
         return getOrCreateCart(user);
     }
