@@ -1,5 +1,7 @@
 package obvx.com.backend.controller;
 
+import jakarta.validation.Valid;
+import obvx.com.backend.dto.UpdateUserRequest;
 import obvx.com.backend.dto.UserResponse;
 import obvx.com.backend.entity.User;
 import obvx.com.backend.service.UserService;
@@ -26,6 +28,19 @@ public class UserController {
 
         return ResponseEntity.ok(
                 userService.getCurrentUser(user)
+        );
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateCurrentUser(
+            @Valid @RequestBody UpdateUserRequest request,
+            Authentication authentication
+    ) {
+
+        User user = (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                userService.updateCurrentUser(user, request)
         );
     }
 }
