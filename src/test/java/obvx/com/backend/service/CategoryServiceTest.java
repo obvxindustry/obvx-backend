@@ -4,6 +4,7 @@ import obvx.com.backend.dto.CategoryRequest;
 import obvx.com.backend.entity.Category;
 import obvx.com.backend.exception.RessourceNotFoundException;
 import obvx.com.backend.repository.CategoryRepository;
+import obvx.com.backend.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,9 @@ class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private ProductRepository productRepository;
 
     @InjectMocks
     private CategoryService categoryService;
@@ -139,15 +143,32 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("deleteCategory - Succès lors de la suppression d'une catégorie existante")
+    @DisplayName("deleteCategory - Succès lors de la suppression d'une catégorie existante sans produit")
     void deleteCategory_success() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(productRepository.countByCategoryId(1L)).thenReturn(0L);
         doNothing().when(categoryRepository).delete(category);
 
         categoryService.deleteCategory(1L);
 
         verify(categoryRepository, times(1)).findById(1L);
+        verify(productRepository, times(1)).countByCategoryId(1L);
         verify(categoryRepository, times(1)).delete(category);
+    }
+
+    @Test
+    @DisplayName("deleteCategory - Lève IllegalStateException si la catégorie contient des produits")
+    void deleteCategory_withProducts_throwsIllegalStateException() {
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(productRepository.countByCategoryId(1L)).thenReturn(3L);
+
+        assertThatThrownBy(() -> categoryService.deleteCategory(1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Impossible de supprimer cette catégorie car elle contient 3 produit(s)");
+
+        verify(categoryRepository, times(1)).findById(1L);
+        verify(productRepository, times(1)).countByCategoryId(1L);
+        verify(categoryRepository, never()).delete(any(Category.class));
     }
 
     @Test

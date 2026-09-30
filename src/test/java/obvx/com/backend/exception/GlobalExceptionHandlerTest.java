@@ -69,4 +69,31 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo("Données invalides");
         assertThat(response.getBody().getTimestamp()).isNotNull();
     }
+
+    @Test
+    @DisplayName("handleIllegalStateException - Retourne 409 CONFLICT avec le message de l'exception")
+    void handleIllegalStateException_returnsConflict() {
+        IllegalStateException ex = new IllegalStateException("Impossible de supprimer cette catégorie");
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleIllegalStateException(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo(409);
+        assertThat(response.getBody().getMessage()).isEqualTo("Impossible de supprimer cette catégorie");
+    }
+
+    @Test
+    @DisplayName("handleRessourceAlreadyExists - Retourne 409 CONFLICT avec le message de l'exception")
+    void handleRessourceAlreadyExists_returnsConflict() {
+        RessourceAlreadyExistsException ex = new RessourceAlreadyExistsException("Produit déjà existant");
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleRessourceAlreadyExists(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getStatus()).isEqualTo(409);
+        assertThat(response.getBody().getMessage()).isEqualTo("Produit déjà existant");
+    }
 }
+
