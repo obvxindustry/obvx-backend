@@ -79,9 +79,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception ignored) {
-            // Token invalide : Spring Security refusera la requête protégée
-        }
-
+        SecurityContextHolder.clearContext();
+    }
         filterChain.doFilter(request, response);
     }
 }

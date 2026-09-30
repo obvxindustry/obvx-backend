@@ -1,6 +1,7 @@
 package obvx.com.backend.controller;
 
-import jakarta.validation.Valid;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import obvx.com.backend.dto.ProductRequest;
 import obvx.com.backend.dto.ProductResponse;
 import obvx.com.backend.service.ProductsService;
@@ -20,40 +21,42 @@ import java.util.List;
 public class ProductsController {
 
     private final ProductsService productsService;
+    private final ObjectMapper objectMapper;
+    private final Validator validator;
 
-    public ProductsController(ProductsService productsService) {
+    public ProductsController(
+            ProductsService productsService,
+            ObjectMapper objectMapper,
+            Validator validator
+    ) {
         this.productsService = productsService;
+        this.objectMapper = objectMapper;
+        this.validator = validator;
     }
 
     // CREATE PRODUCT
-//    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    public ResponseEntity<ProductResponse> createProducts(
-//            @RequestPart("products") @Valid ProductRequest productRequest,
-//            @RequestPart("image") MultipartFile image
-//    ) throws IOException {
-//
-//        ProductResponse productResponse =
-//                productsService.createProduct(productRequest, image);
-//
-//        return ResponseEntity
-//                .status(HttpStatus.CREATED)
-//                .body(productResponse);
-//    }
-
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ProductResponse> createProducts(
             @RequestPart("products") String productsJson,
             @RequestPart("image") MultipartFile image
     ) throws IOException {
 
-        ObjectMapper objectMapper = new ObjectMapper();
-
         ProductRequest productRequest =
-                objectMapper.readValue(productsJson, ProductRequest.class);
+                objectMapper.readValue(
+                        productsJson,
+                        ProductRequest.class
+                );
+
+        validateProductRequest(productRequest);
 
         ProductResponse productResponse =
-                productsService.createProduct(productRequest, image);
+                productsService.createProduct(
+                        productRequest,
+                        image
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -82,11 +85,31 @@ public class ProductsController {
 
     // UPDATE PRODUCT
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductResponse> updateProduct( @PathVariable Long id, @RequestPart("products") String productsJson, @RequestPart(value = "image", required = false) MultipartFile image ) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ProductRequest productRequest = objectMapper.readValue(productsJson, ProductRequest.class);
-        ProductResponse productResponse = productsService.updateProducts( id, productRequest, image );
+    @PutMapping(
+            value = "/{id}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ProductResponse> updateProduct(
+            @PathVariable Long id,
+            @RequestPart("products") String productsJson,
+            @RequestPart(value = "image", required = false)
+            MultipartFile image
+    ) throws IOException {
+
+        ProductRequest productRequest =
+                objectMapper.readValue(
+                        productsJson,
+                        ProductRequest.class
+                );
+
+        validateProductRequest(productRequest);
+
+        ProductResponse productResponse =
+                productsService.updateProducts(
+                        id,
+                        productRequest,
+                        image
+                );
 
         return ResponseEntity.ok(productResponse);
     }
@@ -102,5 +125,16 @@ public class ProductsController {
 
         return ResponseEntity.noContent().build();
     }
-}
 
+    // VALIDATION
+    private void validateProductRequest(
+            ProductRequest productRequest
+    ) {
+
+        var violations = validator.validate(productRequest);
+
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+    }
+}

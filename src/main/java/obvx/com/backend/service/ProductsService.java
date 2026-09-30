@@ -28,7 +28,8 @@ public class ProductsService {
 
     public ProductResponse createProduct(
             ProductRequest productRequest,
-            MultipartFile image) throws IOException {
+            MultipartFile image
+    ) throws IOException {
 
         Category category = categoryRepository.findById(
                 productRequest.getCategoryId()
@@ -36,30 +37,41 @@ public class ProductsService {
                 new RessourceNotFoundException("Catégorie introuvable")
         );
 
-//        String imageUrl = null;
-//
-//        if (image != null && !image.isEmpty()) {
-//            imageUrl = supabaseStorageService.uploadImage(image);
-//        }
-
         if (image == null || image.isEmpty()) {
-            throw new IllegalArgumentException("L'image du produit est obligatoire");
+            throw new IllegalArgumentException(
+                    "L'image du produit est obligatoire"
+            );
         }
 
         String imageUrl = supabaseStorageService.uploadImage(image);
 
-        Products product = new Products();
+        try {
 
-        product.setName(productRequest.getName());
-        product.setDescription(productRequest.getDescription());
-        product.setPrice(productRequest.getPrice());
-        product.setStock(productRequest.getStock());
-        product.setImageUrl(imageUrl);
-        product.setCategory(category);
+            Products product = new Products();
 
-        Products savedProduct = productRepository.save(product);
+            product.setName(productRequest.getName());
+            product.setDescription(productRequest.getDescription());
+            product.setPrice(productRequest.getPrice());
+            product.setStock(productRequest.getStock());
+            product.setImageUrl(imageUrl);
+            product.setCategory(category);
 
-        return mapToResponse(savedProduct);
+            Products savedProduct = productRepository.save(product);
+
+            return mapToResponse(savedProduct);
+
+        } catch (Exception exception) {
+
+            // Nettoyage de l'image si la sauvegarde PostgreSQL échoue
+            if (imageUrl != null && !imageUrl.isBlank()) {
+                try {
+                    supabaseStorageService.deleteImage(imageUrl);
+                } catch (Exception ignored) {
+                    // On évite de masquer l'erreur originale
+                }
+            }
+            throw exception;
+        }
     }
 
 
@@ -84,13 +96,17 @@ public class ProductsService {
 
         Products product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new RessourceNotFoundException("Product not found")
+                        new RessourceNotFoundException(
+                                "Product not found"
+                        )
                 );
 
         Category category = categoryRepository.findById(
                 request.getCategoryId()
         ).orElseThrow(() ->
-                new RessourceNotFoundException("Category not found")
+                new RessourceNotFoundException(
+                        "Category not found"
+                )
         );
 
         product.setName(request.getName());
@@ -99,47 +115,77 @@ public class ProductsService {
         product.setStock(request.getStock());
         product.setCategory(category);
 
+        String oldImageUrl = product.getImageUrl();
+        String newImageUrl = null;
+
         if (image != null && !image.isEmpty()) {
 
-            // Sauvegarder l'ancienne URL
-            String oldImageUrl = product.getImageUrl();
-
-            // Upload de la nouvelle image
-            String newImageUrl =
+            newImageUrl =
                     supabaseStorageService.uploadImage(image);
 
-            // Mettre à jour l'URL en base
             product.setImageUrl(newImageUrl);
-
-            // Supprimer l'ancienne image de Supabase
-            if (oldImageUrl != null && !oldImageUrl.isBlank()) {
-                supabaseStorageService.deleteImage(oldImageUrl);
-            }
         }
 
-        Products updatedProduct = productRepository.save(product);
+        try {
 
-        return mapToResponse(updatedProduct);
+            Products updatedProduct =
+                    productRepository.save(product);
+
+            // La DB est sauvegardée avant de supprimer l'ancienne image
+            if (newImageUrl != null
+                    && oldImageUrl != null
+                    && !oldImageUrl.isBlank()) {
+
+                try {
+                    supabaseStorageService.deleteImage(oldImageUrl);
+                } catch (Exception ignored) {
+                    // L'ancien fichier pourra être nettoyé ultérieurement
+                }
+            }
+
+            return mapToResponse(updatedProduct);
+
+        } catch (Exception exception) {
+
+            // Si la DB échoue après l'upload,
+            // supprimer la nouvelle image.
+            if (newImageUrl != null && !newImageUrl.isBlank()) {
+
+                try {
+                    supabaseStorageService.deleteImage(newImageUrl);
+                } catch (Exception ignored) {
+                    // On évite de masquer l'erreur originale
+                }
+            }
+            throw exception;
+        }
     }
 
+    //DELETE
     public void deleteProducts(Long id) {
 
         Products product = productRepository.findById(id)
                 .orElseThrow(() ->
-                        new RessourceNotFoundException("Product not found")
+                        new RessourceNotFoundException(
+                                "Product not found"
+                        )
                 );
 
-        // Supprimer l'image de Supabase
-        if (product.getImageUrl() != null &&
-                !product.getImageUrl().isBlank()) {
+        String imageUrl = product.getImageUrl();
 
-            supabaseStorageService.deleteImage(
-                    product.getImageUrl()
-            );
-        }
-
-        // Supprimer le produit de PostgreSQL
+        // Supprimer d'abord le produit de PostgreSQL
         productRepository.delete(product);
+
+        // Puis nettoyer l'image dans Supabase
+        if (imageUrl != null && !imageUrl.isBlank()) {
+
+            try {
+                supabaseStorageService.deleteImage(imageUrl);
+            } catch (Exception ignored) {
+                // Le produit est déjà supprimé.
+                // L'image pourra être nettoyée ultérieurement.
+            }
+        }
     }
 
 

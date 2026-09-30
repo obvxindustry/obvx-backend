@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 
@@ -18,20 +17,16 @@ public class ProductRequest {
     private String name;
 
     @NotNull(message = "ce champ est obligatoire")
-    @Positive(message = "le montant doit être positive")
+    @Positive(message = "le montant doit être positif")
     private BigDecimal price;
 
-    @NotNull(message = "ce champ est obligatoire")
+    @NotBlank(message = "La description est obligatoire")
     private String description;
 
     @NotNull(message = "ce champ est obligatoire")
-    @PositiveOrZero(message = "Ce champs doit superieur ou égale à zero")
+    @PositiveOrZero(message = "Ce champ doit être supérieur ou égal à zéro")
     private Integer stock;
 
-    private MultipartFile image;
-
-    private String imageUrl;
-
     @NotNull(message = "Category is required")
-    private long categoryId;
+    private Long categoryId;
 }

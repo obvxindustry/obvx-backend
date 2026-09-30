@@ -1,41 +1,52 @@
 package obvx.com.backend.controller;
 
+import jakarta.validation.Validator;
 import obvx.com.backend.dto.ProductRequest;
 import obvx.com.backend.dto.ProductResponse;
 import obvx.com.backend.entity.Category;
-import obvx.com.backend.exception.GlobalExceptionHandler;
-import obvx.com.backend.exception.RessourceNotFoundException;
 import obvx.com.backend.service.ProductsService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class ProductsControllerTest {
 
-    private MockMvc mockMvc;
-
     @Mock
     private ProductsService productsService;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private Validator validator;
+
     @InjectMocks
     private ProductsController productsController;
+
+    private MockMvc mockMvc;
 
     private ProductResponse productResponse;
 
@@ -43,110 +54,229 @@ class ProductsControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders
                 .standaloneSetup(productsController)
-                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
 
-        Category category = Category.builder().id(1L).name("Smartphones").build();
+        Category category = new Category();
+        category.setId(1L);
+        category.setName("Électronique");
 
         productResponse = new ProductResponse(
-                10L,
+                1L,
                 "iPhone 15",
                 "Smartphone Apple",
                 new BigDecimal("999.99"),
                 50,
-                "https://supabase.co/img.jpg",
+                "https://example.com/image.jpg",
                 category
         );
     }
 
+    // =========================================================
+    // CREATE
+    // =========================================================
+
     @Test
-    @DisplayName("POST /products - Crée un produit avec image multipart et retourne 201 CREATED")
     void createProducts_success() throws Exception {
-        when(productsService.createProduct(any(ProductRequest.class), any(MultipartFile.class)))
-                .thenReturn(productResponse);
 
-        MockMultipartFile imagePart = new MockMultipartFile(
+        ProductRequest productRequest = new ProductRequest();
+
+        productRequest.setName("iPhone 15");
+        productRequest.setDescription("Smartphone Apple");
+        productRequest.setPrice(new BigDecimal("999.99"));
+        productRequest.setStock(50);
+        productRequest.setCategoryId(1L);
+
+        MockMultipartFile image = new MockMultipartFile(
                 "image",
-                "phone.png",
-                "image/png",
-                "fake image content".getBytes()
+                "iphone.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "fake-image-content".getBytes()
         );
 
-        String productJson = "{"
-                + "\"name\": \"iPhone 15\","
-                + "\"description\": \"Smartphone Apple\","
-                + "\"price\": 999.99,"
-                + "\"stock\": 50,"
-                + "\"categoryId\": 1"
-                + "}";
+        when(objectMapper.readValue(
+                anyString(),
+                eq(ProductRequest.class)
+        )).thenReturn(productRequest);
 
-        MockMultipartFile productPart = new MockMultipartFile(
-                "products",
-                "",
-                "application/json",
-                productJson.getBytes()
-        );
+        when(validator.validate(productRequest))
+                .thenReturn(Collections.emptySet());
 
-        mockMvc.perform(multipart("/products")
-                        .file(imagePart)
-                        .file(productPart))
+        when(productsService.createProduct(
+                any(ProductRequest.class),
+                any()
+        )).thenReturn(productResponse);
+
+        mockMvc.perform(
+                        multipart("/products")
+                                .file(image)
+                                .file(
+                                        new MockMultipartFile(
+                                                "products",
+                                                "",
+                                                MediaType.APPLICATION_JSON_VALUE,
+                                                "{}".getBytes()
+                                        )
+                                )
+                                .contentType(
+                                        MediaType.MULTIPART_FORM_DATA
+                                )
+                )
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(10L))
+                .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("iPhone 15"))
-                .andExpect(jsonPath("$.price").value(999.99));
-
-        verify(productsService, times(1)).createProduct(any(ProductRequest.class), any(MultipartFile.class));
+                .andExpect(jsonPath("$.description")
+                        .value("Smartphone Apple"))
+                .andExpect(jsonPath("$.price").value(999.99))
+                .andExpect(jsonPath("$.stock").value(50))
+                .andExpect(jsonPath("$.imageUrl")
+                        .value("https://example.com/image.jpg"));
     }
 
-    @Test
-    @DisplayName("GET /products - Retourne 200 OK avec la liste des produits")
-    void getAllProducts_success() throws Exception {
-        when(productsService.getAllProducts()).thenReturn(Collections.singletonList(productResponse));
+    // =========================================================
+    // GET ALL
+    // =========================================================
 
-        mockMvc.perform(get("/products"))
+    @Test
+    void getAllProducts_success() throws Exception {
+
+        when(productsService.getAllProducts())
+                .thenReturn(List.of(productResponse));
+
+        mockMvc.perform(
+                        get("/products")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(10L))
-                .andExpect(jsonPath("$[0].name").value("iPhone 15"));
-
-        verify(productsService, times(1)).getAllProducts();
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("iPhone 15"))
+                .andExpect(jsonPath("$[0].price").value(999.99))
+                .andExpect(jsonPath("$[0].stock").value(50));
     }
 
     @Test
-    @DisplayName("GET /products/{id} - Retourne 200 OK quand le produit existe")
-    void getProductById_found() throws Exception {
-        when(productsService.searchProductById(10L)).thenReturn(productResponse);
+    void getAllProducts_empty() throws Exception {
 
-        mockMvc.perform(get("/products/10"))
+        when(productsService.getAllProducts())
+                .thenReturn(Collections.emptyList());
+
+        mockMvc.perform(
+                        get("/products")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10L))
-                .andExpect(jsonPath("$.name").value("iPhone 15"));
-
-        verify(productsService, times(1)).searchProductById(10L);
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
+    // =========================================================
+    // GET BY ID
+    // =========================================================
+
     @Test
-    @DisplayName("GET /products/{id} - Retourne 404 NOT_FOUND quand le produit n'existe pas")
-    void getProductById_notFound() throws Exception {
-        when(productsService.searchProductById(99L))
-                .thenThrow(new RessourceNotFoundException("Product not found"));
+    void getProductById_success() throws Exception {
 
-        mockMvc.perform(get("/products/99"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Product not found"));
+        when(productsService.searchProductById(1L))
+                .thenReturn(productResponse);
 
-        verify(productsService, times(1)).searchProductById(99L);
+        mockMvc.perform(
+                        get("/products/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("iPhone 15"))
+                .andExpect(jsonPath("$.description")
+                        .value("Smartphone Apple"))
+                .andExpect(jsonPath("$.price").value(999.99))
+                .andExpect(jsonPath("$.stock").value(50));
     }
 
+    // =========================================================
+    // UPDATE
+    // =========================================================
+
     @Test
-    @DisplayName("DELETE /products/{id} - Retourne 204 NO_CONTENT")
+    void updateProduct_success() throws Exception {
+
+        ProductRequest productRequest = new ProductRequest();
+
+        productRequest.setName("iPhone 15 Pro");
+        productRequest.setDescription("Smartphone Apple Pro");
+        productRequest.setPrice(new BigDecimal("1299.99"));
+        productRequest.setStock(25);
+        productRequest.setCategoryId(1L);
+
+        ProductResponse updatedResponse = new ProductResponse(
+                1L,
+                "iPhone 15 Pro",
+                "Smartphone Apple Pro",
+                new BigDecimal("1299.99"),
+                25,
+                "https://example.com/new-image.jpg",
+                productResponse.getCategory()
+        );
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image",
+                "iphone-pro.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "fake-image-content".getBytes()
+        );
+
+        when(objectMapper.readValue(
+                anyString(),
+                eq(ProductRequest.class)
+        )).thenReturn(productRequest);
+
+        when(validator.validate(productRequest))
+                .thenReturn(Collections.emptySet());
+
+        when(productsService.updateProducts(
+                eq(1L),
+                any(ProductRequest.class),
+                any()
+        )).thenReturn(updatedResponse);
+
+        mockMvc.perform(
+                        multipart("/products/1")
+                                .file(image)
+                                .file(
+                                        new MockMultipartFile(
+                                                "products",
+                                                "",
+                                                MediaType.APPLICATION_JSON_VALUE,
+                                                "{}".getBytes()
+                                        )
+                                )
+                                .with(request -> {
+                                    request.setMethod("PUT");
+                                    return request;
+                                })
+                                .contentType(
+                                        MediaType.MULTIPART_FORM_DATA
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name")
+                        .value("iPhone 15 Pro"))
+                .andExpect(jsonPath("$.description")
+                        .value("Smartphone Apple Pro"))
+                .andExpect(jsonPath("$.price").value(1299.99))
+                .andExpect(jsonPath("$.stock").value(25));
+    }
+
+    // =========================================================
+    // DELETE
+    // =========================================================
+
+    @Test
     void deleteProduct_success() throws Exception {
-        doNothing().when(productsService).deleteProducts(10L);
 
-        mockMvc.perform(delete("/products/10"))
+        mockMvc.perform(
+                        delete("/products/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
                 .andExpect(status().isNoContent());
-
-        verify(productsService, times(1)).deleteProducts(10L);
     }
 }

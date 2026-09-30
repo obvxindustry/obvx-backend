@@ -14,6 +14,9 @@ import java.util.Date;
 @Service
 public class JwtService {
 
+    private static final long JWT_EXPIRATION_MS =
+            24 * 60 * 60 * 1000L;
+
     private final SecretKey secretKey;
 
     public JwtService(
@@ -33,7 +36,10 @@ public class JwtService {
                 .claim("role", user.getRole().name())
                 .issuedAt(new Date())
                 .expiration(
-                        new Date(System.currentTimeMillis() + 86400000)
+                        new Date(
+                                System.currentTimeMillis()
+                                        + JWT_EXPIRATION_MS
+                        )
                 )
                 .signWith(secretKey)
                 .compact();
