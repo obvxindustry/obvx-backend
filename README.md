@@ -2,108 +2,143 @@
 
 Backend REST API de la plateforme **OBVX**, développé avec **Spring Boot**.
 
-L'objectif du projet est de fournir une API sécurisée permettant de gérer les utilisateurs, les catégories, les produits, les paniers et progressivement l'ensemble des fonctionnalités nécessaires à une plateforme e-commerce.
+Le backend fournit actuellement les fonctionnalités nécessaires à la gestion de l'authentification, des utilisateurs, des rôles, des catégories, des produits, des images produits et du panier utilisateur.
+
+Les fonctionnalités e-commerce avancées telles que les commandes, les paiements, l'historique des commandes et la gestion avancée du stock restent à développer.
 
 ---
 
 ## 🚀 Technologies utilisées
 
-* **Java 25**
-* **Spring Boot 4.1.1**
-* **Spring Security**
-* **JWT (JSON Web Token)**
-* **Spring Data JPA**
-* **Hibernate**
-* **PostgreSQL**
-* **Supabase PostgreSQL**
-* **Supabase Storage**
-* **Jakarta Validation**
-* **Lombok**
-* **Maven**
-* **Docker**
-* **Render**
-* **Postman**
+- **Java 17** — version configurée dans Maven
+- **Spring Boot 4.1.1**
+- **Spring Security**
+- **JWT**
+- **Spring Data JPA**
+- **Hibernate**
+- **PostgreSQL**
+- **Supabase PostgreSQL**
+- **Supabase Storage**
+- **Jakarta Validation**
+- **Lombok**
+- **Maven**
+- **Docker**
+- **Postman**
+- **JUnit 5**
+- **Mockito**
+- **AssertJ**
+- **Spring MockMvc**
+
+> Le `Dockerfile` utilise actuellement une image **Eclipse Temurin 25 JDK**, tandis que le `pom.xml` configure Java 17 pour la compilation. Cette différence devra être harmonisée ultérieurement.
 
 ---
 
 # 📁 Architecture du projet
 
 ```text
-src/main/java/obvx/com/backend
+src/
+├── main/
+│   ├── java/
+│   │   └── obvx/com/backend/
+│   │       │
+│   │       ├── BackendApplication.java
+│   │       │
+│   │       ├── config/
+│   │       │   ├── JwtAuthenticationFilter.java
+│   │       │   ├── SecurityConfig.java
+│   │       │   └── SupabaseConfig.java
+│   │       │
+│   │       ├── controller/
+│   │       │   ├── AdminController.java
+│   │       │   ├── AuthController.java
+│   │       │   ├── CartController.java
+│   │       │   ├── CategoryController.java
+│   │       │   ├── ProductsController.java
+│   │       │   └── UserController.java
+│   │       │
+│   │       ├── dto/
+│   │       │   ├── AddToCartRequest.java
+│   │       │   ├── AdminRequest.java
+│   │       │   ├── AuthResponse.java
+│   │       │   ├── CartItemResponse.java
+│   │       │   ├── CartResponse.java
+│   │       │   ├── CategoryRequest.java
+│   │       │   ├── LoginRequest.java
+│   │       │   ├── ProductRequest.java
+│   │       │   ├── ProductResponse.java
+│   │       │   ├── RegisterRequest.java
+│   │       │   ├── UpdateCartItemRequest.java
+│   │       │   ├── UpdateUserRequest.java
+│   │       │   └── UserResponse.java
+│   │       │
+│   │       ├── entity/
+│   │       │   ├── Cart.java
+│   │       │   ├── CartItem.java
+│   │       │   ├── Category.java
+│   │       │   ├── Products.java
+│   │       │   ├── Role.java
+│   │       │   └── User.java
+│   │       │
+│   │       ├── exception/
+│   │       │   ├── ErrorResponse.java
+│   │       │   ├── GlobalExceptionHandler.java
+│   │       │   ├── RessourceAlreadyExistsException.java
+│   │       │   └── RessourceNotFoundException.java
+│   │       │
+│   │       ├── repository/
+│   │       │   ├── CartItemRepository.java
+│   │       │   ├── CartRepository.java
+│   │       │   ├── CategoryRepository.java
+│   │       │   ├── ProductRepository.java
+│   │       │   └── UserRepository.java
+│   │       │
+│   │       └── service/
+│   │           ├── AdminService.java
+│   │           ├── AuthService.java
+│   │           ├── CartService.java
+│   │           ├── CategoryService.java
+│   │           ├── JwtService.java
+│   │           ├── ProductsService.java
+│   │           ├── SupabaseStorageService.java
+│   │           └── UserService.java
+│   │
+│   └── resources/
+│       └── application.properties
 │
-├── config/
-│   ├── JwtAuthenticationFilter.java
-│   └── SecurityConfig.java
-│
-├── controller/
-│   ├── AdminController.java
-│   ├── AuthController.java
-│   ├── CartController.java
-│   ├── CategoryController.java
-│   ├── ProductsController.java
-│   └── UserController.java
-│
-├── dto/
-│   ├── AddToCartRequest.java
-│   ├── AdminRequest.java
-│   ├── AuthResponse.java
-│   ├── CartItemResponse.java
-│   ├── CartResponse.java
-│   ├── CategoryRequest.java
-│   ├── LoginRequest.java
-│   ├── ProductRequest.java
-│   ├── ProductResponse.java
-│   ├── RegisterRequest.java
-│   ├── UpdateCartItemRequest.java
-│   ├── UpdateUserRequest.java
-│   └── UserResponse.java
-│
-├── entity/
-│   ├── Cart.java
-│   ├── CartItem.java
-│   ├── Category.java
-│   ├── Products.java
-│   ├── Role.java
-│   └── User.java
-│
-├── exception/
-│   ├── ErrorResponse.java
-│   ├── GlobalExceptionHandler.java
-│   ├── RessourceAlreadyExistsException.java
-│   └── RessourceNotFoundException.java
-│
-├── repository/
-│   ├── CartItemRepository.java
-│   ├── CartRepository.java
-│   ├── CategoryRepository.java
-│   ├── ProductRepository.java
-│   └── UserRepository.java
-│
-└── service/
-    ├── AdminService.java
-    ├── AuthService.java
-    ├── CartService.java
-    ├── CategoryService.java
-    ├── JwtService.java
-    ├── ProductsService.java
-    └── UserService.java
+└── test/
+    └── java/
+        └── obvx/com/backend/
+            ├── service/
+            ├── controller/
+            ├── config/
+            ├── exception/
+            └── BackendApplicationTests.java
 ```
 
 ---
 
 # 🔐 Authentification
 
-L'API utilise **Spring Security** et des **JWT** pour authentifier les utilisateurs.
+L'API utilise **Spring Security** et des **JWT**.
 
-Le système comprend :
+Le système actuel permet :
 
-* inscription ;
-* connexion ;
-* génération d'un JWT ;
-* validation du JWT ;
-* récupération de l'utilisateur à partir du token ;
-* gestion des rôles ;
-* protection des endpoints.
+- l'inscription ;
+- la connexion ;
+- le hashage des mots de passe ;
+- la génération d'un JWT ;
+- la validation du JWT ;
+- l'identification de l'utilisateur connecté ;
+- la récupération du rôle depuis l'utilisateur ;
+- la protection des endpoints.
+
+Le filtre `JwtAuthenticationFilter` intercepte les requêtes contenant :
+
+```http
+Authorization: Bearer <token>
+```
+
+Il récupère l'email du token, recherche l'utilisateur correspondant et place son authentification dans le `SecurityContext`.
 
 ---
 
@@ -113,7 +148,7 @@ Le système comprend :
 POST /api/auth/register
 ```
 
-### Exemple de requête
+### Requête
 
 ```json
 {
@@ -123,15 +158,19 @@ POST /api/auth/register
 }
 ```
 
-Le mot de passe est hashé avant d'être enregistré en base de données.
+Contraintes :
 
-Un utilisateur créé via l'inscription possède automatiquement le rôle :
+- `name` obligatoire ;
+- `email` obligatoire et valide ;
+- mot de passe d'au moins **8 caractères**.
+
+Un nouvel utilisateur reçoit automatiquement le rôle :
 
 ```text
 CUSTOMER
 ```
 
-### Exemple de réponse
+### Réponse
 
 ```json
 {
@@ -142,6 +181,8 @@ CUSTOMER
 }
 ```
 
+Le mot de passe est hashé avant son enregistrement en base de données.
+
 ---
 
 # 🔑 Connexion
@@ -150,7 +191,7 @@ CUSTOMER
 POST /api/auth/login
 ```
 
-### Exemple de requête
+### Requête
 
 ```json
 {
@@ -159,7 +200,7 @@ POST /api/auth/login
 }
 ```
 
-### Exemple de réponse
+### Réponse
 
 ```json
 {
@@ -171,9 +212,7 @@ POST /api/auth/login
 }
 ```
 
-Le token retourné est utilisé pour accéder aux endpoints protégés.
-
-### Header d'authentification
+Le token doit ensuite être envoyé avec :
 
 ```http
 Authorization: Bearer <token>
@@ -196,56 +235,58 @@ issuedAt
 expiration
 ```
 
-La durée de validité actuelle du token est de :
+La durée de validité actuelle est de **24 heures**.
+
+Le flux d'authentification est :
 
 ```text
-24 heures
+Client
+   ↓
+Authorization: Bearer <JWT>
+   ↓
+JwtAuthenticationFilter
+   ↓
+JwtService
+   ↓
+UserRepository
+   ↓
+User
+   ↓
+SecurityContext
 ```
-
-Lorsqu'une requête protégée arrive, `JwtAuthenticationFilter` :
-
-1. récupère le header `Authorization` ;
-2. vérifie la présence de `Bearer` ;
-3. extrait le token ;
-4. récupère l'email depuis le JWT ;
-5. recherche l'utilisateur en base ;
-6. vérifie la validité et l'expiration du token ;
-7. récupère son rôle ;
-8. crée l'authentification Spring Security ;
-9. place l'utilisateur authentifié dans le `SecurityContext`.
 
 ---
 
 # 🛡️ Sécurité
 
-La configuration de sécurité est gérée dans :
+La configuration principale se trouve dans :
 
 ```text
 SecurityConfig.java
 ```
 
-Le filtre JWT est intégré avant :
+Le projet active également la sécurité au niveau des méthodes avec :
 
-```text
-UsernamePasswordAuthenticationFilter
+```java
+@EnableMethodSecurity
 ```
 
-Les routes suivantes sont accessibles sans authentification :
+Les routes d'authentification sont accessibles sans JWT :
 
 ```text
-/api/auth/register
-/api/auth/login
+/auth/register
+/auth/login
 ```
 
-Les autres endpoints nécessitent une authentification.
+Toutes les autres requêtes nécessitent une authentification.
 
-Les fonctionnalités réservées aux administrateurs utilisent :
+Les fonctionnalités administrateur utilisent :
 
 ```java
 @PreAuthorize("hasRole('ADMIN')")
 ```
 
-Le système utilise notamment les autorités :
+Les autorités utilisées sont :
 
 ```text
 ROLE_ADMIN
@@ -254,41 +295,40 @@ ROLE_CUSTOMER
 
 ---
 
-# 👤 Gestion des rôles
+# 👤 Rôles
 
-Deux rôles sont actuellement disponibles :
+Deux rôles sont actuellement définis :
 
-```java
+```text
 ADMIN
 CUSTOMER
 ```
 
 ## CUSTOMER
 
-Un client authentifié peut notamment :
+Un utilisateur authentifié peut :
 
-* consulter les catégories ;
-* consulter les produits ;
-* consulter son profil ;
-* modifier son profil ;
-* consulter son panier ;
-* ajouter des produits à son panier ;
-* modifier la quantité d'un article ;
-* supprimer un article de son panier ;
-* vider son panier ;
-* accéder aux endpoints nécessitant uniquement une authentification.
+- consulter les catégories ;
+- consulter les produits ;
+- consulter son profil ;
+- modifier son profil ;
+- consulter son panier ;
+- ajouter un produit au panier ;
+- modifier la quantité d'un article ;
+- supprimer un article ;
+- vider son panier.
 
 ## ADMIN
 
 Un administrateur peut également :
 
-* créer une catégorie ;
-* modifier une catégorie ;
-* supprimer une catégorie ;
-* créer un produit ;
-* modifier un produit ;
-* supprimer un produit ;
-* créer un autre administrateur.
+- créer une catégorie ;
+- modifier une catégorie ;
+- supprimer une catégorie ;
+- créer un produit ;
+- modifier un produit ;
+- supprimer un produit ;
+- créer un autre administrateur.
 
 ---
 
@@ -300,15 +340,13 @@ Un administrateur peut également :
 POST /api/admin
 ```
 
-Cet endpoint est protégé par :
+Accès :
 
-```java
-@PreAuthorize("hasRole('ADMIN')")
+```text
+ADMIN uniquement
 ```
 
-Seul un utilisateur possédant le rôle `ADMIN` peut créer un autre administrateur.
-
-### Exemple
+### Requête
 
 ```json
 {
@@ -318,28 +356,13 @@ Seul un utilisateur possédant le rôle `ADMIN` peut créer un autre administrat
 }
 ```
 
-### Réponse
+La requête utilise les mêmes contraintes de validation que l'inscription.
 
-```json
-{
-  "id": 2,
-  "name": "Admin OBVX",
-  "email": "admin@obvx.com",
-  "role": "ADMIN"
-}
-```
-
-Un utilisateur `CUSTOMER` qui tente d'utiliser cet endpoint reçoit :
-
-```http
-403 Forbidden
-```
+Un utilisateur `CUSTOMER` ne peut pas accéder à cette route.
 
 ---
 
-# 👤 Gestion du profil utilisateur
-
-L'API permet à un utilisateur authentifié de consulter les informations de son compte et de modifier son profil.
+# 👤 Profil utilisateur
 
 ## Consulter son profil
 
@@ -347,24 +370,26 @@ L'API permet à un utilisateur authentifié de consulter les informations de son
 GET /api/users/me
 ```
 
-L'utilisateur doit fournir un JWT valide :
+Authentification requise.
 
-```http
-Authorization: Bearer <token>
-```
-
-Le backend récupère l'utilisateur connecté directement depuis l'authentification Spring Security.
-
-### Exemple de réponse
+### Réponse
 
 ```json
 {
   "id": 1,
   "name": "Christ Amien",
-  "email": "christ@obvx.com",
-  "role": "ADMIN"
+  "email": "amien@example.com",
+  "role": "CUSTOMER"
 }
 ```
+
+L'utilisateur connecté est récupéré directement depuis :
+
+```java
+Authentication authentication
+```
+
+---
 
 ## Modifier son profil
 
@@ -372,9 +397,7 @@ Le backend récupère l'utilisateur connecté directement depuis l'authentificat
 PUT /api/users/me
 ```
 
-Cet endpoint est accessible à tout utilisateur authentifié.
-
-### Exemple de requête
+### Requête
 
 ```json
 {
@@ -383,42 +406,11 @@ Cet endpoint est accessible à tout utilisateur authentifié.
 }
 ```
 
-Les données sont validées avec `Jakarta Validation`.
-
-Le rôle de l'utilisateur n'est pas modifiable depuis cet endpoint.
-
-### Exemple de réponse
-
-```json
-{
-  "id": 1,
-  "name": "Christ Amien Updated",
-  "email": "christ@obvx.com",
-  "role": "ADMIN"
-}
-```
-
-### Architecture
-
-```text
-JWT
- ↓
-JwtAuthenticationFilter
- ↓
-Authentication
- ↓
-UserController
- ↓
-UserService
- ↓
-UserRepository
- ↓
-PostgreSQL
-```
+Le rôle n'est pas modifiable avec cette route.
 
 ---
 
-# 📂 Gestion des catégories
+# 📂 Catégories
 
 Base URL :
 
@@ -426,17 +418,33 @@ Base URL :
 /api/category
 ```
 
-| Méthode | Endpoint             | Accès       |
-| ------- | -------------------- | ----------- |
-| GET     | `/api/category`      | Authentifié |
-| GET     | `/api/category/{id}` | Authentifié |
-| POST    | `/api/category`      | ADMIN       |
-| PUT     | `/api/category/{id}` | ADMIN       |
-| DELETE  | `/api/category/{id}` | ADMIN       |
+| Méthode | Endpoint | Accès |
+|---|---|---|
+| GET | `/api/category` | Authentifié |
+| GET | `/api/category/{id}` | Authentifié |
+| POST | `/api/category` | ADMIN |
+| PUT | `/api/category/{id}` | ADMIN |
+| DELETE | `/api/category/{id}` | ADMIN |
+
+### Création
+
+```http
+POST /api/category
+```
+
+Exemple :
+
+```json
+{
+  "name": "T-Shirts"
+}
+```
+
+Une catégorie ne peut pas être supprimée lorsqu'elle possède encore des produits associés.
 
 ---
 
-# 👕 Gestion des produits
+# 👕 Produits
 
 Base URL :
 
@@ -444,75 +452,205 @@ Base URL :
 /api/products
 ```
 
-Les produits sont gérés dynamiquement depuis le backend.
+Les produits possèdent actuellement :
 
-Il n'est donc pas nécessaire de hardcoder les produits dans le frontend.
+```text
+id
+name
+description
+price
+stock
+imageUrl
+category
+```
 
-| Méthode | Endpoint             | Accès       |
-| ------- | -------------------- | ----------- |
-| GET     | `/api/products`      | Authentifié |
-| GET     | `/api/products/{id}` | Authentifié |
-| POST    | `/api/products`      | ADMIN       |
-| PUT     | `/api/products/{id}` | ADMIN       |
-| DELETE  | `/api/products/{id}` | ADMIN       |
+Les montants sont représentés avec :
+
+```java
+BigDecimal
+```
+
+## Endpoints
+
+| Méthode | Endpoint | Accès |
+|---|---|---|
+| GET | `/api/products` | Authentifié |
+| GET | `/api/products/{id}` | Authentifié |
+| POST | `/api/products` | ADMIN |
+| PUT | `/api/products/{id}` | ADMIN |
+| DELETE | `/api/products/{id}` | ADMIN |
 
 ---
 
-# 🛒 Gestion du panier
+# 🖼️ Images des produits
 
-OBVX dispose d'un système de panier associé à l'utilisateur authentifié.
+Les images sont stockées dans **Supabase Storage**.
 
-Chaque utilisateur possède son propre panier.
+La configuration actuelle utilise :
 
-Le panier est composé de plusieurs `CartItem`. Chaque élément référence :
+```properties
+supabase.url=${SUPABASE_URL}
+supabase.key=${SUPABASE_KEY}
+supabase.bucket=products-image
+```
 
-* le panier ;
-* un produit ;
-* une quantité.
-
-### Architecture
+Le flux est :
 
 ```text
-JWT
- ↓
-JwtAuthenticationFilter
- ↓
-Authentication
- ↓
-CartController
- ↓
-CartService
- ↓
-CartRepository / CartItemRepository / ProductRepository
- ↓
+Frontend
+   ↓
+Spring Boot
+   ↓
+Supabase Storage
+   ↓
+URL publique de l'image
+   ↓
 PostgreSQL
+```
+
+L'URL de l'image est ensuite enregistrée dans :
+
+```text
+products.imageUrl
 ```
 
 ---
 
-## 📥 Consulter son panier
+## 📤 Création d'un produit
+
+La création utilise :
+
+```text
+multipart/form-data
+```
+
+avec deux parties :
+
+```text
+products → JSON du produit
+image    → fichier image
+```
+
+Endpoint :
+
+```http
+POST /api/products
+```
+
+Authentification :
+
+```text
+ADMIN
+```
+
+### Exemple du JSON `products`
+
+```json
+{
+  "name": "OBVX T-Shirt",
+  "description": "T-shirt OBVX",
+  "price": 25000,
+  "stock": 20,
+  "categoryId": 1
+}
+```
+
+L'image est obligatoire lors de la création.
+
+---
+
+## 🔄 Modification d'un produit
+
+```http
+PUT /api/products/{id}
+```
+
+Authentification :
+
+```text
+ADMIN
+```
+
+La requête utilise également :
+
+```text
+multipart/form-data
+```
+
+Le JSON contient les informations du produit :
+
+```json
+{
+  "name": "OBVX T-Shirt Updated",
+  "description": "Nouveau descriptif",
+  "price": 28000,
+  "stock": 15,
+  "categoryId": 1
+}
+```
+
+L'image est facultative.
+
+Si une nouvelle image est fournie :
+
+```text
+Ancienne image
+      ↓
+Upload nouvelle image
+      ↓
+Mise à jour imageUrl
+      ↓
+Suppression ancienne image
+```
+
+---
+
+## 🗑️ Suppression d'un produit
+
+```http
+DELETE /api/products/{id}
+```
+
+Avant de supprimer le produit de PostgreSQL, le backend tente également de supprimer son image dans Supabase Storage.
+
+---
+
+# 🛒 Panier
+
+Chaque utilisateur authentifié possède son propre panier.
+
+Architecture :
+
+```text
+User
+  │
+  └── Cart
+       │
+       ├── CartItem
+       │    └── Product
+       │
+       └── CartItem
+            └── Product
+```
+
+Le panier contient :
+
+- un utilisateur ;
+- plusieurs articles ;
+- un produit par article ;
+- une quantité par article.
+
+---
+
+## 🛒 Consulter son panier
 
 ```http
 GET /api/cart
 ```
 
-L'utilisateur doit être authentifié.
+Si l'utilisateur n'a pas encore de panier, le backend en crée automatiquement un.
 
-Le backend récupère automatiquement l'utilisateur depuis :
-
-```java
-Authentication authentication
-```
-
-puis :
-
-```java
-User user = (User) authentication.getPrincipal();
-```
-
-Si l'utilisateur ne possède pas encore de panier, le backend en crée automatiquement un.
-
-### Exemple de réponse
+### Exemple
 
 ```json
 {
@@ -534,19 +672,13 @@ Si l'utilisateur ne possède pas encore de panier, le backend en crée automatiq
 
 ---
 
-## ➕ Ajouter un produit au panier
+## ➕ Ajouter un produit
 
 ```http
 POST /api/cart/items
 ```
 
-Authentification requise :
-
-```http
-Authorization: Bearer <token>
-```
-
-### Exemple de requête
+### Requête
 
 ```json
 {
@@ -555,64 +687,26 @@ Authorization: Bearer <token>
 }
 ```
 
-Les données sont validées avec Jakarta Validation.
+La quantité doit être supérieure à `0`.
 
-La quantité doit être strictement supérieure à `0`.
+Si le produit existe déjà dans le panier, la quantité est augmentée.
 
-### Fonctionnement
-
-Si le produit n'est pas encore présent dans le panier :
+Exemple :
 
 ```text
-Produit
- ↓
-Création d'un CartItem
- ↓
-Ajout au panier
+T-Shirt × 2
++
+T-Shirt × 3
+=
+T-Shirt × 5
 ```
-
-Si le produit est déjà présent :
-
-```text
-Ancienne quantité + nouvelle quantité
- ↓
-Nouvelle quantité
-```
-
-Par exemple :
-
-```text
-T-shirt × 2
-```
-
-puis :
-
-```text
-T-shirt × 3
-```
-
-donne :
-
-```text
-T-shirt × 5
-```
-
-Le backend retourne ensuite le panier mis à jour.
 
 ---
 
-## 🔄 Modifier la quantité d'un article
+## 🔄 Modifier la quantité
 
 ```http
 PUT /api/cart/items/{cartItemId}
-```
-
-L'utilisateur doit être authentifié.
-
-### Exemple
-
-```http
-PUT /api/cart/items/3
 ```
 
 ### Requête
@@ -623,218 +717,73 @@ PUT /api/cart/items/3
 }
 ```
 
-La quantité doit être strictement supérieure à `0`.
+La quantité doit être supérieure à `0`.
 
-Le backend vérifie que le `CartItem` appartient bien au panier de l'utilisateur authentifié avant de modifier sa quantité.
-
-### Fonctionnement
-
-```text
-JWT
- ↓
-User
- ↓
-Cart
- ↓
-CartItem
- ↓
-Modification de la quantité
-```
-
-Cette vérification empêche un utilisateur de modifier le panier d'un autre utilisateur.
+Le backend vérifie que l'article appartient bien au panier de l'utilisateur connecté.
 
 ---
 
-## 🗑️ Supprimer un article du panier
+## 🗑️ Supprimer un article
 
 ```http
 DELETE /api/cart/items/{cartItemId}
 ```
 
-### Exemple
-
-```http
-DELETE /api/cart/items/3
-```
-
 Aucun body n'est nécessaire.
 
-Le backend vérifie que l'article appartient au panier de l'utilisateur authentifié avant de le supprimer.
-
-Le panier mis à jour est ensuite retourné.
+Le backend vérifie que l'article appartient au panier de l'utilisateur connecté.
 
 ---
 
-## 🧹 Vider complètement le panier
+## 🧹 Vider le panier
 
 ```http
 DELETE /api/cart
 ```
 
-Cette opération supprime tous les `CartItem` du panier de l'utilisateur.
+Tous les `CartItem` sont supprimés.
 
-Le panier lui-même n'est pas supprimé.
+Le panier lui-même est conservé.
 
-### Fonctionnement
+Cette opération utilise une transaction :
 
-```text
-User
- ↓
-Cart
- ↓
-Tous les CartItem
- ↓
-Suppression
- ↓
-Cart vide
-```
-
-La suppression est exécutée dans une transaction JPA afin de garantir une opération cohérente sur la base de données.
-
-### Exemple de réponse
-
-```json
-{
-  "id": 1,
-  "items": [],
-  "total": 0
-}
+```java
+@Transactional
 ```
 
 ---
 
 ## 💰 Calcul du panier
 
-Le sous-total d'un article est calculé avec :
+Le sous-total est calculé avec :
 
 ```text
 prix × quantité
 ```
 
-Le montant total du panier correspond à la somme des sous-totaux.
+Le total correspond à la somme des sous-totaux.
 
-Les montants sont manipulés avec :
+Les valeurs monétaires utilisent :
 
 ```java
 BigDecimal
 ```
 
-afin d'assurer une meilleure précision pour les valeurs monétaires.
-
-### Exemple
-
-```text
-Produit A
-25 000 × 2 = 50 000
-
-Produit B
-15 000 × 1 = 15 000
-
-Total = 65 000
-```
-
----
-
-# 🖼️ Gestion et stockage des images
-
-Les images des produits sont gérées avec **Supabase Storage**.
-
-Le bucket utilisé par l'application est configuré dans :
-
-```properties
-supabase.bucket=product-images
-```
-
-Lorsqu'un administrateur crée un produit avec une image :
-
-```text
-Frontend
-    ↓
-POST /api/products
-    ↓
-Spring Boot
-    ↓
-Supabase Storage
-    ↓
-product-images/
-    ↓
-URL de l'image
-    ↓
-PostgreSQL
-```
-
-### Important
-
-Les images ne sont pas stockées dans le conteneur Docker.
-
-Elles restent dans **Supabase Storage**, même lorsque le backend est déployé sur Render.
-
-Cela permet d'éviter de perdre les fichiers lors du redémarrage ou du redéploiement du conteneur.
-
-Le backend conserve les informations nécessaires au produit ainsi que l'URL permettant d'accéder à son image.
-
----
-
-## 📤 Création d'un produit avec une image
-
-La création utilise :
-
-```text
-multipart/form-data
-```
-
-avec deux parties :
-
-```text
-products → JSON du produit
-image    → fichier image
-```
-
-Exemple conceptuel :
-
-```text
-POST /api/products
-
-Authorization: Bearer <ADMIN_TOKEN>
-
-Content-Type: multipart/form-data
-
-products:
-{
-    "name": "OBVX T-Shirt",
-    "description": "T-shirt OBVX",
-    "price": 25000,
-    "categoryId": 1
-}
-
-image:
-product.jpg
-```
-
-Le backend reçoit le fichier puis l'envoie dans :
-
-```text
-Supabase Storage
-└── product-images/
-```
-
----
-
-## 🔄 Modification d'un produit
-
-```http
-PUT /api/products/{id}
-```
-
-L'image est optionnelle lors de la modification.
-
-Si une nouvelle image est envoyée, elle est traitée par le backend et stockée dans Supabase Storage.
-
 ---
 
 # 🗄️ Base de données
 
-Le backend utilise **PostgreSQL hébergé par Supabase**.
+Le backend utilise :
+
+```text
+PostgreSQL
+```
+
+avec une connexion configurée vers :
+
+```text
+Supabase PostgreSQL
+```
 
 Architecture :
 
@@ -850,23 +799,17 @@ PostgreSQL
 Supabase
 ```
 
-Supabase fournit également le stockage des images :
+La stratégie Hibernate actuellement configurée est :
 
-```text
-                 ┌── PostgreSQL
-Spring Boot ─────┤
-                 └── Supabase Storage
-                         │
-                         └── product-images
+```properties
+spring.jpa.hibernate.ddl-auto=update
 ```
 
 ---
 
 # 🔐 Variables d'environnement
 
-Les informations sensibles ne sont pas stockées directement dans le code.
-
-Variables utilisées :
+Les informations sensibles sont fournies par des variables d'environnement.
 
 ```env
 SUPABASE_DB_HOST=your_host
@@ -876,111 +819,95 @@ SUPABASE_DB_USER=your_user
 SUPABASE_DB_PASSWORD=your_password
 
 SUPABASE_URL=your_supabase_url
-SUPABASE_SECRET_KEY=your_supabase_secret_key
+SUPABASE_KEY=your_supabase_key
 
 JWT_SECRET=your_jwt_secret
 ```
 
-Le fichier `.env` est utilisé uniquement en environnement local.
+Le fichier `.env` local est chargé grâce à :
 
-Il est exclu de Git grâce à :
-
-```gitignore
-.env
+```properties
+spring.config.import=optional:file:./.env[.properties]
 ```
 
-Il est également exclu de l'image Docker grâce à :
-
-```text
-.dockerignore
-```
-
-**Ne jamais publier les valeurs réelles de ces variables sur GitHub.**
+Le fichier `.env` ne doit jamais être publié sur GitHub.
 
 ---
 
-# ⚠️ Gestion globale des exceptions
+# ⚠️ Gestion des exceptions
 
-L'application possède un système centralisé de gestion des erreurs grâce à :
+Les erreurs sont centralisées avec :
 
 ```text
 GlobalExceptionHandler
 ```
 
-Exemple :
-
-```json
-{
-  "status": 404,
-  "message": "Produit introuvable",
-  "timestamp": "2026-09-24T10:30:00"
-}
-```
-
-## Exceptions personnalisées
+Exceptions personnalisées :
 
 ```text
 RessourceNotFoundException
 RessourceAlreadyExistsException
 ```
 
-## Codes HTTP
+Les validations Jakarta Validation sont également traitées globalement.
 
-| Code | Signification                      |
-| ---- | ---------------------------------- |
-| 400  | Données invalides                  |
-| 401  | Authentification requise           |
-| 403  | Accès interdit                     |
-| 404  | Ressource introuvable              |
-| 409  | Ressource déjà existante / conflit |
+Codes HTTP utilisés notamment :
+
+| Code | Signification |
+|---|---|
+| 400 | Données invalides |
+| 401 | Authentification requise |
+| 403 | Accès interdit |
+| 404 | Ressource introuvable |
+| 409 | Conflit / ressource existante / règle métier |
 
 ---
 
 # 🐳 Docker
 
-Le backend peut être exécuté dans un conteneur Docker.
+Le projet possède un `Dockerfile`.
 
-Fichiers utilisés :
+Il utilise actuellement :
 
-```text
-Dockerfile
-.dockerignore
+```dockerfile
+FROM eclipse-temurin:25-jdk
 ```
 
-### Construire l'image
+Construction :
 
 ```bash
 docker build -t obvx-backend .
 ```
 
-### Lancer le conteneur
+Lancement :
 
 ```bash
 docker run --rm -p 8080:8080 --env-file .env obvx-backend
 ```
 
-L'API est disponible sur :
+Le conteneur expose :
 
 ```text
-http://localhost:8080/api
+8080
 ```
 
-### Validation
+Le port Spring Boot est configurable avec :
 
-Le backend a été testé dans Docker avec :
+```properties
+server.port=${PORT:8080}
+```
 
-* Java 25 ;
-* Spring Boot 4.1.1 ;
-* Spring Security ;
-* JWT ;
-* Supabase PostgreSQL ;
-* Supabase Storage ;
-* Hibernate ;
-* API REST.
+Cette configuration permet notamment d'utiliser un environnement de déploiement fournissant dynamiquement la variable `PORT`.
 
 ---
 
-# ⚙️ Configuration Spring Boot
+# ⚙️ Configuration actuelle
+
+Le fichier principal est :
+
+```text
+src/main/resources/application.properties
+```
 
 Configuration actuelle :
 
@@ -997,207 +924,20 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 supabase.url=${SUPABASE_URL}
-supabase.key=${SUPABASE_SECRET_KEY}
-supabase.bucket=product-images
+supabase.key=${SUPABASE_KEY}
+supabase.bucket=products-image
 
 server.servlet.context-path=/api
+
 server.port=${PORT:8080}
 
 jwt.secret=${JWT_SECRET}
 ```
 
-Le port :
-
-```properties
-server.port=${PORT:8080}
-```
-
-permet au backend d'utiliser automatiquement le port fourni par Render.
-
----
-
-# 🧪 Tests Unitaires
-
-Le projet intègre une suite complète de **95 tests automatisés** respectant strictement la logique métier et l'isolation des classes testées (services, contrôleurs, sécurité, exceptions).
-
-### Outils & Bibliothèques
-* **JUnit 5** : Moteur d'exécution des tests (`@Test`, `@DisplayName`, `@BeforeEach`)
-* **Mockito** : Mocking isolé des dépendances (`@Mock`, `@InjectMocks`, `verify`, `when`)
-* **AssertJ** : Assertions fluides et expressives (`assertThat`, `assertThatThrownBy`)
-* **Spring MockMvc (Standalone)** : Validation des contrôleurs REST en isolation complète sans charger le contexte lourd de Spring
-
-### Couverture des classes testées
-
-| Couche | Classe testée | Classe de test | Nombre de tests | Scénarios couverts |
-| :--- | :--- | :--- | :---: | :--- |
-| **Services** | `AdminService` | `AdminServiceTest` | 2 | Création d'administrateur, rejet d'email déjà existant (`IllegalArgumentException`) |
-| **Services** | `AuthService` | `AuthServiceTest` | 7 | Inscription client, unicité email, login réussi, utilisateur introuvable, mot de passe incorrect, élévation de rôle `makeAdmin` |
-| **Services** | `CartService` | `CartServiceTest` | 13 | Consultation/création panier, ajout article (nouveau / incrémentation quantité), modification quantité, suppression article, vidage panier, calcul sous-totaux et total, gestion des exceptions 404 (`RessourceNotFoundException`) |
-| **Services** | `CategoryService` | `CategoryServiceTest` | 9 | CRUD complet, recherche, introuvable, règle métier de non-suppression si des produits y sont rattachés (`IllegalStateException`) |
-| **Services** | `JwtService` | `JwtServiceTest` | 4 | Génération du token avec claims (id, name, role), extraction de l'email, validation de token valide, rejet d'un token pour un utilisateur différent |
-| **Services** | `ProductsService` | `ProductsServiceTest` | 13 | CRUD produits, upload image via Supabase, mise à jour partielle (nom, prix, catégorie, image), exceptions ressource non trouvée |
-| **Services** | `SupabaseStorageService` | `SupabaseStorageServiceTest` | 2 | Envoi de fichier vers le bucket Supabase Storage, construction de l'URL publique |
-| **Services** | `UserService` | `UserServiceTest` | 2 | Récupération du profil connecté (`getCurrentUser`), mise à jour des informations (`updateCurrentUser`) |
-| **Contrôleurs** | `AdminController` | `AdminControllerTest` | 3 | Création admin `201 CREATED`, validation mot de passe trop court `400 BAD_REQUEST`, email invalide `400` |
-| **Contrôleurs** | `AuthController` | `AuthControllerTest` | 5 | Inscription `201 CREATED`, login `200 OK`, validation des DTOs (email invalide, mot de passe < 8 caractères, email vide) |
-| **Contrôleurs** | `CartController` | `CartControllerTest` | 8 | `GET /cart`, `POST /cart/items` (succès, quantité <= 0, produit introuvable 404), `PUT /cart/items/{id}`, `DELETE /cart/items/{id}`, `DELETE /cart` |
-| **Contrôleurs** | `CategoryController` | `CategoryControllerTest` | 7 | `POST /category`, `GET /category`, `GET /category/{id}`, `PUT /category/{id}`, `DELETE /category/{id}`, validation Jakarta |
-| **Contrôleurs** | `ProductsController` | `ProductsControllerTest` | 5 | Endpoints produits avec MockMultipartFile, validation DTO, gestion des erreurs |
-| **Contrôleurs** | `UserController` | `UserControllerTest` | 4 | `GET /users/me`, `PUT /users/me`, validation du nom obligatoire et email invalide |
-| **Sécurité** | `JwtAuthenticationFilter` | `JwtAuthenticationFilterTest` | 5 | Absence de header, header non-Bearer, token valide injectant `Authentication` dans le `SecurityContextHolder`, token invalide ignoré, capture d'erreur sur token corrompu |
-| **Exceptions** | `GlobalExceptionHandler` | `GlobalExceptionHandlerTest` | 5 | `RessourceNotFoundException` (404), `MethodArgumentNotValidException` (400), `IllegalStateException` (409 CONFLICT), `RessourceAlreadyExistsException` (409 CONFLICT) |
-| **Application** | `BackendApplication` | `BackendApplicationTests` | 1 | Chargement du contexte Spring Boot |
-
-### 🚀 Exécution des tests
-
-Exécuter l'ensemble des tests du projet :
-```bash
-./mvnw test
-```
-
-Exécuter uniquement les tests de services :
-```bash
-./mvnw test -Dtest="*ServiceTest"
-```
-
-Exécuter uniquement les tests des contrôleurs :
-```bash
-./mvnw test -Dtest="*ControllerTest"
-```
-
-Exécuter une classe de test spécifique :
-```bash
-./mvnw test -Dtest=CartServiceTest
-```
-
----
-
-# 🧪 Tests avec Postman
-
-### Authentification
-
-* [x] Register
-* [x] Login
-* [x] Génération du JWT
-* [x] Bearer Token
-* [x] Validation du token
-
-### Sécurité
-
-* [x] CUSTOMER authentifié
-* [x] ADMIN authentifié
-* [x] Protection des endpoints
-* [x] `@PreAuthorize("hasRole('ADMIN')")`
-* [x] CUSTOMER → `403 Forbidden`
-* [x] ADMIN → accès autorisé
-
-### Administration
-
-* [x] Création d'un administrateur
-* [x] Vérification du rôle ADMIN
-
-### Profil utilisateur
-
-* [x] Consultation du profil
-* [x] Modification du profil
-* [x] Protection des données utilisateur
-* [x] Rôle non modifiable depuis le profil
-
-### Catégories
-
-* [x] Création
-* [x] Lecture
-* [x] Lecture par ID
-* [x] Modification
-* [x] Suppression
-
-### Produits
-
-* [x] Création
-* [x] Lecture
-* [x] Lecture par ID
-* [x] Modification
-* [x] Suppression
-* [x] Upload d'image
-* [x] Stockage des images dans Supabase Storage
-
-### Panier
-
-* [x] Création automatique du panier
-* [x] Consultation du panier
-* [x] Ajout d'un produit
-* [x] Gestion de la quantité lors de l'ajout
-* [x] Modification de la quantité
-* [x] Détection d'un produit déjà présent
-* [x] Suppression d'un article
-* [x] Vidage complet du panier
-* [x] Calcul du sous-total
-* [x] Calcul du total
-* [x] Vérification de la propriété du panier
-* [x] Transaction lors du vidage du panier
-
-### Exceptions
-
-* [x] Validation des données
-* [x] Ressource introuvable
-* [x] Ressource déjà existante
-* [x] Réponses d'erreur centralisées
-
-### Docker
-
-* [x] Construction de l'image
-* [x] Démarrage du conteneur
-* [x] Connexion à Supabase PostgreSQL
-* [x] Test de l'API dans Docker
-
----
-
-# 🚀 Installation locale
-
-### 1. Cloner le projet
-
-```bash
-git clone <repository-url>
-```
-
-### 2. Entrer dans le projet
-
-```bash
-cd backend
-```
-
-### 3. Créer `.env`
-
-```env
-SUPABASE_DB_HOST=your_host
-SUPABASE_DB_PORT=5432
-SUPABASE_DB_NAME=postgres
-SUPABASE_DB_USER=your_user
-SUPABASE_DB_PASSWORD=your_password
-
-SUPABASE_URL=your_supabase_url
-SUPABASE_SECRET_KEY=your_supabase_secret_key
-
-JWT_SECRET=your_jwt_secret
-```
-
-### 4. Lancer avec Maven
-
-Linux / macOS :
-
-```bash
-./mvnw spring-boot:run
-```
-
-Windows :
-
-```powershell
-.\mvnw.cmd spring-boot:run
-```
-
-L'API sera disponible sur :
+L'API est donc accessible localement à partir de :
 
 ```text
 http://localhost:8080/api
@@ -1205,171 +945,303 @@ http://localhost:8080/api
 
 ---
 
-# ☁️ Déploiement
+# 🧪 Tests automatisés
 
-Architecture prévue :
+Le projet possède une suite de tests unitaires couvrant principalement :
 
-```text
-GitHub
-   ↓
-Render
-   ↓
-Docker
-   ↓
-Spring Boot
-   ├──→ Supabase PostgreSQL
-   │
-   └──→ Supabase Storage
-             │
-             └── product-images
-```
+- services ;
+- contrôleurs ;
+- JWT ;
+- filtre d'authentification ;
+- gestion globale des exceptions ;
+- chargement du contexte Spring Boot.
 
-### Render
+Technologies utilisées :
 
-Render exécute le backend à partir du `Dockerfile`.
+- JUnit 5
+- Mockito
+- AssertJ
+- Spring MockMvc
 
-Les variables sensibles doivent être configurées dans les **Environment Variables** de Render.
+La liste actuellement documentée représente **90 tests**.
 
-Variables nécessaires :
+### Services
 
 ```text
-SUPABASE_DB_HOST
-SUPABASE_DB_PORT
-SUPABASE_DB_NAME
-SUPABASE_DB_USER
-SUPABASE_DB_PASSWORD
-SUPABASE_URL
-SUPABASE_SECRET_KEY
-JWT_SECRET
+AdminServiceTest
+AuthServiceTest
+CartServiceTest
+CategoryServiceTest
+JwtServiceTest
+ProductsServiceTest
+SupabaseStorageServiceTest
+UserServiceTest
 ```
 
-Le fichier `.env` local ne doit pas être envoyé sur GitHub ni intégré à l'image Docker.
+### Contrôleurs
 
-Le port est fourni automatiquement par Render grâce à :
+```text
+AdminControllerTest
+AuthControllerTest
+CartControllerTest
+CategoryControllerTest
+ProductsControllerTest
+UserControllerTest
+```
 
-```properties
-server.port=${PORT:8080}
+### Sécurité
+
+```text
+JwtAuthenticationFilterTest
+```
+
+### Exceptions
+
+```text
+GlobalExceptionHandlerTest
+```
+
+### Application
+
+```text
+BackendApplicationTests
 ```
 
 ---
 
-# 📌 Endpoints principaux
+## 🚀 Exécuter les tests
 
-| Méthode | Endpoint                       | Accès       |
-| ------- | ------------------------------ | ----------- |
-| POST    | `/api/auth/register`           | Public      |
-| POST    | `/api/auth/login`              | Public      |
-| POST    | `/api/admin`                   | ADMIN       |
-| GET     | `/api/users/me`                | Authentifié |
-| PUT     | `/api/users/me`                | Authentifié |
-| GET     | `/api/category`                | Authentifié |
-| GET     | `/api/category/{id}`           | Authentifié |
-| POST    | `/api/category`                | ADMIN       |
-| PUT     | `/api/category/{id}`           | ADMIN       |
-| DELETE  | `/api/category/{id}`           | ADMIN       |
-| GET     | `/api/products`                | Authentifié |
-| GET     | `/api/products/{id}`           | Authentifié |
-| POST    | `/api/products`                | ADMIN       |
-| PUT     | `/api/products/{id}`           | ADMIN       |
-| DELETE  | `/api/products/{id}`           | ADMIN       |
-| GET     | `/api/cart`                    | Authentifié |
-| POST    | `/api/cart/items`              | Authentifié |
-| PUT     | `/api/cart/items/{cartItemId}` | Authentifié |
-| DELETE  | `/api/cart/items/{cartItemId}` | Authentifié |
-| DELETE  | `/api/cart`                    | Authentifié |
+Tous les tests :
+
+```bash
+./mvnw test
+```
+
+Windows :
+
+```powershell
+.\mvnw.cmd test
+```
+
+Tests des services :
+
+```bash
+./mvnw test -Dtest="*ServiceTest"
+```
+
+Tests des contrôleurs :
+
+```bash
+./mvnw test -Dtest="*ControllerTest"
+```
+
+Test spécifique :
+
+```bash
+./mvnw test -Dtest=CartServiceTest
+```
 
 ---
 
-# 🛣️ Roadmap
+# 📌 Endpoints disponibles
+
+| Méthode | Endpoint | Accès |
+|---|---|---|
+| POST | `/api/auth/register` | Public |
+| POST | `/api/auth/login` | Public |
+| POST | `/api/admin` | ADMIN |
+| GET | `/api/users/me` | Authentifié |
+| PUT | `/api/users/me` | Authentifié |
+| GET | `/api/category` | Authentifié |
+| GET | `/api/category/{id}` | Authentifié |
+| POST | `/api/category` | ADMIN |
+| PUT | `/api/category/{id}` | ADMIN |
+| DELETE | `/api/category/{id}` | ADMIN |
+| GET | `/api/products` | Authentifié |
+| GET | `/api/products/{id}` | Authentifié |
+| POST | `/api/products` | ADMIN |
+| PUT | `/api/products/{id}` | ADMIN |
+| DELETE | `/api/products/{id}` | ADMIN |
+| GET | `/api/cart` | Authentifié |
+| POST | `/api/cart/items` | Authentifié |
+| PUT | `/api/cart/items/{cartItemId}` | Authentifié |
+| DELETE | `/api/cart/items/{cartItemId}` | Authentifié |
+| DELETE | `/api/cart` | Authentifié |
+
+---
+
+# 🛣️ État actuel du projet
 
 ## Authentification & sécurité
 
-* [x] Inscription
-* [x] Connexion
-* [x] JWT
-* [x] JwtAuthenticationFilter
-* [x] Spring Security
-* [x] Rôles ADMIN / CUSTOMER
-* [x] Protection des endpoints
-* [x] Création d'administrateurs
+- [x] Inscription
+- [x] Connexion
+- [x] Hashage des mots de passe
+- [x] JWT
+- [x] JwtAuthenticationFilter
+- [x] Spring Security
+- [x] Rôles `ADMIN` / `CUSTOMER`
+- [x] Protection des endpoints
+- [x] Création d'administrateurs
+- [x] Protection au niveau des méthodes avec `@PreAuthorize`
 
 ## Utilisateurs
 
-* [x] Consultation du profil
-* [x] Modification du profil
-* [x] Protection du profil
-* [x] Gestion du rôle utilisateur
+- [x] Consultation du profil
+- [x] Modification du profil
+- [x] Protection du profil
+- [x] Gestion des rôles
 
 ## Catalogue
 
-* [x] Gestion des catégories
-* [x] Gestion des produits
-* [x] Upload d'images
-* [x] Stockage des images avec Supabase Storage
-* [x] Validation des données
-* [x] Gestion globale des exceptions
+- [x] CRUD catégories
+- [x] CRUD produits
+- [x] Validation des données
+- [x] Upload d'images
+- [x] Stockage Supabase Storage
+- [x] Suppression de l'ancienne image lors d'un remplacement
+- [x] Suppression de l'image lors de la suppression du produit
+- [x] Gestion globale des exceptions
 
 ## Panier
 
-* [x] Création automatique du panier
-* [x] Consultation du panier
-* [x] Ajout de produits
-* [x] Gestion des quantités
-* [x] Modification de la quantité
-* [x] Suppression d'un article
-* [x] Vidage du panier
-* [x] Calcul des sous-totaux
-* [x] Calcul du total
-* [x] Vérification de la propriété du panier
-* [x] Gestion transactionnelle
+- [x] Création automatique du panier
+- [x] Consultation du panier
+- [x] Ajout de produits
+- [x] Gestion des quantités
+- [x] Modification de la quantité
+- [x] Suppression d'un article
+- [x] Vidage du panier
+- [x] Calcul des sous-totaux
+- [x] Calcul du total
+- [x] Vérification de la propriété des articles
+- [x] Transaction lors du vidage
 
 ## Infrastructure
 
-* [x] PostgreSQL avec Supabase
-* [x] Supabase Storage
-* [x] Variables d'environnement
-* [x] Dockerisation
-* [x] Test du backend dans Docker
-* [x] Déploiement Render
+- [x] PostgreSQL / Supabase
+- [x] Supabase Storage
+- [x] Variables d'environnement
+- [x] Dockerisation
+- [x] Configuration du port dynamique
+- [ ] Harmonisation Java Maven / Docker
 
-## Fonctionnalités e-commerce
+## Tests
 
-* [x] Panier
-* [ ] Gestion avancée des utilisateurs
-* [ ] Commandes
-* [ ] Order Items
-* [ ] Gestion du stock
-* [ ] Paiement
-* [ ] Historique des commandes
-
-## Qualité
-
-* [ ] Sécurisation avancée des uploads
-* [ ] Gestion des types et tailles de fichiers
-* [ ] Suppression automatique des anciennes images
-* [ ] Swagger / OpenAPI
-* [x] Tests unitaires (JUnit 5, Mockito, AssertJ, MockMvc - 95 tests)
-* [ ] Tests d'intégration
-* [ ] Tests de sécurité
-* [ ] Optimisation des requêtes
-* [ ] Gestion des logs
-
-## Frontend
-
-* [ ] Développement du frontend OBVX
-* [ ] Connexion à l'API
-* [ ] Authentification utilisateur
-* [ ] Interface administrateur
-* [ ] Catalogue produits
-* [ ] Panier
-* [ ] Commandes
+- [x] Tests des services
+- [x] Tests des contrôleurs
+- [x] Tests JWT
+- [x] Tests du filtre JWT
+- [x] Tests du gestionnaire d'exceptions
+- [x] Test de démarrage Spring Boot
+- [ ] Tests d'intégration complets
+- [ ] Tests end-to-end
 
 ---
 
-# 👨‍💻 Auteur
+# 🛒 Fonctionnalités e-commerce à développer
 
-**Christ Amien**
+Les fonctionnalités suivantes ne sont **pas encore implémentées** dans le backend actuel :
 
-Développeur Web, Mobile, IA & Data Analyst.
+- [ ] Gestion avancée du stock
+- [ ] Commandes
+- [ ] `Order`
+- [ ] `OrderItem`
+- [ ] Passage du panier vers une commande
+- [ ] Historique des commandes
+- [ ] Statuts des commandes
+- [ ] Paiement
+- [ ] Gestion des adresses de livraison
+- [ ] Gestion de la livraison
+- [ ] Annulation de commande
+- [ ] Remboursement
+
+---
+
+# 🔒 Améliorations techniques prévues
+
+- [ ] Harmoniser Java 17 / Java 25
+- [ ] Sécuriser davantage les uploads
+- [ ] Vérifier les types MIME des images
+- [ ] Limiter la taille des fichiers
+- [ ] Améliorer la gestion des erreurs Supabase
+- [ ] Ajouter Swagger / OpenAPI
+- [ ] Ajouter des tests d'intégration
+- [ ] Ajouter des tests de sécurité
+- [ ] Optimiser certaines requêtes JPA
+- [ ] Ajouter une gestion structurée des logs
+- [ ] Améliorer la configuration de production
+- [ ] Ajouter une stratégie de migration de base de données
+
+---
+
+# 🌐 Frontend
+
+Le frontend OBVX n'est pas inclus dans ce dépôt.
+
+Il devra consommer l'API REST du backend pour :
+
+- l'inscription ;
+- la connexion ;
+- l'authentification JWT ;
+- l'affichage des catégories ;
+- l'affichage des produits ;
+- la gestion du panier ;
+- la gestion du profil ;
+- les fonctionnalités administrateur.
+
+---
+
+# 📈 Évolution prévue du backend
+
+L'évolution du backend suivra progressivement cette architecture :
+
+```text
+                    ┌──────────────┐
+                    │   Frontend   │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │ REST API     │
+                    │ Spring Boot  │
+                    └──────┬───────┘
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+          ▼                ▼                ▼
+   Authentication      Catalogue         Panier
+       JWT             Products           Cart
+       Users           Category         CartItem
+          │                │                │
+          └────────────────┼────────────────┘
+                           ▼
+                    ┌──────────────┐
+                    │ PostgreSQL   │
+                    │  Supabase    │
+                    └──────────────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Supabase   │
+                    │   Storage    │
+                    └──────────────┘
+```
+
+La prochaine grande étape fonctionnelle sera l'ajout du système de **commandes**, puis la gestion du stock, du paiement et du cycle de vie d'une commande.
+
+---
+
+# 👨‍💻 Auteur(s)
+
+**Christ Amien** & **Ossey Yvan**
 
 Projet **OBVX**.
+
+---
+
+## 📄 Repository
+
+Le code source est disponible sur GitHub :
+
+https://github.com/obvxindustry/obvx-backend
