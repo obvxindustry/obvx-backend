@@ -260,13 +260,24 @@ class CartServiceTest {
     @Test
     @DisplayName("clearCart - Vide entièrement le panier de l'utilisateur")
     void clearCart_success() {
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-        doNothing().when(cartItemRepository).deleteAllByCartId(1L);
+
+        when(cartRepository.findByUser(user))
+                .thenReturn(Optional.of(cart));
+
+        doNothing()
+                .when(cartItemRepository)
+                .deleteAllByCartId(1L);
 
         CartResponse response = cartService.clearCart(user);
 
         assertThat(response).isNotNull();
-        verify(cartItemRepository, times(1)).deleteAllByCartId(1L);
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.items()).isEmpty();
+        assertThat(response.total())
+                .isEqualByComparingTo(BigDecimal.ZERO);
+
+        verify(cartItemRepository, times(1))
+                .deleteAllByCartId(1L);
     }
 
     @Test

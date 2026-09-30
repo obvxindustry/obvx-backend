@@ -2,15 +2,15 @@
 
 Backend REST API de la plateforme **OBVX**, développé avec **Spring Boot**.
 
-Le backend fournit actuellement les fonctionnalités nécessaires à la gestion de l'authentification, des utilisateurs, des rôles, des catégories, des produits, des images produits et du panier utilisateur.
+Le backend fournit actuellement les fonctionnalités nécessaires à la gestion de l'authentification, des utilisateurs, des rôles, des catégories, des produits, des images produits, du panier utilisateur et des commandes.
 
-Les fonctionnalités e-commerce avancées telles que les commandes, les paiements, l'historique des commandes et la gestion avancée du stock restent à développer.
+Les fonctionnalités de paiement, de livraison et de gestion avancée du stock restent à intégrer.
 
 ---
 
 ## 🚀 Technologies utilisées
 
-- **Java 17** — version configurée dans Maven
+- **Java 25**
 - **Spring Boot 4.1.1**
 - **Spring Security**
 - **JWT**
@@ -28,8 +28,6 @@ Les fonctionnalités e-commerce avancées telles que les commandes, les paiement
 - **Mockito**
 - **AssertJ**
 - **Spring MockMvc**
-
-> Le `Dockerfile` utilise actuellement une image **Eclipse Temurin 25 JDK**, tandis que le `pom.xml` configure Java 17 pour la compilation. Cette différence devra être harmonisée ultérieurement.
 
 ---
 
@@ -53,6 +51,7 @@ src/
 │   │       │   ├── AuthController.java
 │   │       │   ├── CartController.java
 │   │       │   ├── CategoryController.java
+│   │       │   ├── OrderController.java
 │   │       │   ├── ProductsController.java
 │   │       │   └── UserController.java
 │   │       │
@@ -63,7 +62,10 @@ src/
 │   │       │   ├── CartItemResponse.java
 │   │       │   ├── CartResponse.java
 │   │       │   ├── CategoryRequest.java
+│   │       │   ├── CreateOrderRequest.java
 │   │       │   ├── LoginRequest.java
+│   │       │   ├── OrderItemResponse.java
+│   │       │   ├── OrderResponse.java
 │   │       │   ├── ProductRequest.java
 │   │       │   ├── ProductResponse.java
 │   │       │   ├── RegisterRequest.java
@@ -75,6 +77,9 @@ src/
 │   │       │   ├── Cart.java
 │   │       │   ├── CartItem.java
 │   │       │   ├── Category.java
+│   │       │   ├── Order.java
+│   │       │   ├── OrderItem.java
+│   │       │   ├── OrderStatus.java
 │   │       │   ├── Products.java
 │   │       │   ├── Role.java
 │   │       │   └── User.java
@@ -89,6 +94,8 @@ src/
 │   │       │   ├── CartItemRepository.java
 │   │       │   ├── CartRepository.java
 │   │       │   ├── CategoryRepository.java
+│   │       │   ├── OrderItemRepository.java
+│   │       │   ├── OrderRepository.java
 │   │       │   ├── ProductRepository.java
 │   │       │   └── UserRepository.java
 │   │       │
@@ -98,6 +105,7 @@ src/
 │   │           ├── CartService.java
 │   │           ├── CategoryService.java
 │   │           ├── JwtService.java
+│   │           ├── OrderService.java
 │   │           ├── ProductsService.java
 │   │           ├── SupabaseStorageService.java
 │   │           └── UserService.java
@@ -121,7 +129,7 @@ src/
 
 L'API utilise **Spring Security** et des **JWT**.
 
-Le système actuel permet :
+Le système permet :
 
 - l'inscription ;
 - la connexion ;
@@ -316,7 +324,10 @@ Un utilisateur authentifié peut :
 - ajouter un produit au panier ;
 - modifier la quantité d'un article ;
 - supprimer un article ;
-- vider son panier.
+- vider son panier ;
+- créer une commande ;
+- consulter ses commandes ;
+- consulter le détail d'une commande.
 
 ## ADMIN
 
@@ -486,14 +497,6 @@ BigDecimal
 
 Les images sont stockées dans **Supabase Storage**.
 
-La configuration actuelle utilise :
-
-```properties
-supabase.url=${SUPABASE_URL}
-supabase.key=${SUPABASE_KEY}
-supabase.bucket=products-image
-```
-
 Le flux est :
 
 ```text
@@ -659,7 +662,7 @@ Si l'utilisateur n'a pas encore de panier, le backend en crée automatiquement u
     {
       "id": 1,
       "productId": 5,
-      "name": "OBVX T-Shirt",
+      "productName": "OBVX T-Shirt",
       "price": 25000,
       "imageUrl": "https://...",
       "quantity": 2,
@@ -771,6 +774,243 @@ BigDecimal
 
 ---
 
+## 📦 Gestion du stock dans le panier
+
+L'ajout d'un produit au panier **ne diminue pas le stock**.
+
+Exemple :
+
+```text
+Stock en base : 10
+
+Client ajoute 2 produits au panier
+
+Stock en base : 10
+Panier : 2
+```
+
+Le stock est vérifié et décrémenté lors de la création effective de la commande.
+
+```text
+Ajout au panier
+      ↓
+Stock inchangé
+      ↓
+Création commande
+      ↓
+Vérification du stock
+      ↓
+Décrémentation du stock
+```
+
+Cette stratégie évite de bloquer inutilement le stock lorsqu'un utilisateur abandonne son panier.
+
+---
+
+# 📦 Commandes
+
+Le système de commandes est maintenant implémenté.
+
+Architecture :
+
+```text
+User
+ │
+ └── Order
+      │
+      ├── OrderItem
+      │     └── Product
+      │
+      ├── total
+      ├── status
+      └── createdAt
+```
+
+---
+
+## 🧾 Order
+
+Une commande contient notamment :
+
+```text
+id
+user
+status
+total
+createdAt
+items
+```
+
+---
+
+## 🧾 OrderItem
+
+Chaque article d'une commande conserve :
+
+```text
+id
+product
+quantity
+unitPrice
+subtotal
+```
+
+Le `unitPrice` est enregistré au moment de la création de la commande afin de conserver le prix historique.
+
+Ainsi, si le prix d'un produit change plus tard, l'ancienne commande conserve le prix auquel le produit a été acheté.
+
+---
+
+## 📊 Statuts des commandes
+
+Les statuts actuellement définis sont :
+
+```text
+PENDING
+CONFIRMED
+SHIPPED
+DELIVERED
+CANCELLED
+```
+
+---
+
+# 🛍️ Création d'une commande
+
+```http
+POST /api/orders
+```
+
+Authentification requise.
+
+La commande est créée à partir du panier de l'utilisateur connecté.
+
+Le frontend n'a pas besoin d'envoyer les prix ou le total.
+
+Le backend récupère directement les informations nécessaires depuis la base de données.
+
+### Flux
+
+```text
+Cart
+  ↓
+Vérification panier non vide
+  ↓
+Récupération des produits
+  ↓
+Vérification du stock
+  ↓
+Création Order
+  ↓
+Création OrderItem
+  ↓
+Calcul du total côté serveur
+  ↓
+Décrémentation du stock
+  ↓
+Sauvegarde de la commande
+  ↓
+Vidage du panier
+```
+
+La création de la commande est réalisée dans une transaction afin d'éviter une commande partiellement créée en cas d'erreur.
+
+---
+
+## 📋 Consulter mes commandes
+
+```http
+GET /api/orders
+```
+
+L'utilisateur reçoit uniquement ses propres commandes.
+
+Les commandes sont retournées de la plus récente à la plus ancienne.
+
+---
+
+## 🔎 Consulter une commande
+
+```http
+GET /api/orders/{orderId}
+```
+
+Le backend vérifie que la commande appartient à l'utilisateur connecté.
+
+Un utilisateur ne peut donc pas consulter la commande d'un autre utilisateur simplement en modifiant l'ID.
+
+---
+
+## 📦 Exemple de réponse
+
+```json
+{
+  "id": 1,
+  "status": "PENDING",
+  "total": 50000,
+  "createdAt": "2026-09-30T16:00:00",
+  "items": [
+    {
+      "id": 1,
+      "productId": 5,
+      "productName": "OBVX T-Shirt",
+      "imageUrl": "https://...",
+      "quantity": 2,
+      "unitPrice": 25000,
+      "subtotal": 50000
+    }
+  ]
+}
+```
+
+---
+
+# 💳 Paiement
+
+Le paiement n'est **pas encore intégré**.
+
+Le système de commandes est cependant prêt à évoluer vers un système de paiement.
+
+Le futur flux pourra être :
+
+```text
+Cart
+  ↓
+Order PENDING
+  ↓
+Payment
+  ↓
+Agrégateur de paiement
+  ↓
+Paiement réussi
+  ↓
+Order CONFIRMED
+```
+
+En cas d'échec du paiement, une stratégie spécifique pourra être ajoutée pour gérer le statut de la commande et, si nécessaire, la restauration du stock.
+
+---
+
+# 🚚 Livraison
+
+La gestion de la livraison n'est pas encore implémentée.
+
+Elle pourra être ajoutée après l'intégration du paiement.
+
+Le cycle prévu pourra être :
+
+```text
+PENDING
+   ↓
+CONFIRMED
+   ↓
+SHIPPED
+   ↓
+DELIVERED
+```
+
+---
+
 # 🗄️ Base de données
 
 Le backend utilise :
@@ -824,11 +1064,7 @@ SUPABASE_KEY=your_supabase_key
 JWT_SECRET=your_jwt_secret
 ```
 
-Le fichier `.env` local est chargé grâce à :
-
-```properties
-spring.config.import=optional:file:./.env[.properties]
-```
+Le fichier `.env` local est chargé grâce à la configuration Spring.
 
 Le fichier `.env` ne doit jamais être publié sur GitHub.
 
@@ -867,12 +1103,6 @@ Codes HTTP utilisés notamment :
 
 Le projet possède un `Dockerfile`.
 
-Il utilise actuellement :
-
-```dockerfile
-FROM eclipse-temurin:25-jdk
-```
-
 Construction :
 
 ```bash
@@ -909,7 +1139,7 @@ Le fichier principal est :
 src/main/resources/application.properties
 ```
 
-Configuration actuelle :
+Configuration principale :
 
 ```properties
 spring.config.import=optional:file:./.env[.properties]
@@ -924,7 +1154,6 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 supabase.url=${SUPABASE_URL}
 supabase.key=${SUPABASE_KEY}
@@ -947,7 +1176,7 @@ http://localhost:8080/api
 
 # 🧪 Tests automatisés
 
-Le projet possède une suite de tests unitaires couvrant principalement :
+Le projet possède une suite de tests couvrant principalement :
 
 - services ;
 - contrôleurs ;
@@ -963,49 +1192,21 @@ Technologies utilisées :
 - AssertJ
 - Spring MockMvc
 
-La liste actuellement documentée représente **90 tests**.
-
-### Services
+Les tests couvrent notamment :
 
 ```text
-AdminServiceTest
-AuthServiceTest
-CartServiceTest
-CategoryServiceTest
-JwtServiceTest
-ProductsServiceTest
-SupabaseStorageServiceTest
-UserServiceTest
+AdminService
+AuthService
+CartService
+CategoryService
+JwtService
+ProductsService
+SupabaseStorageService
+UserService
+OrderService
 ```
 
-### Contrôleurs
-
-```text
-AdminControllerTest
-AuthControllerTest
-CartControllerTest
-CategoryControllerTest
-ProductsControllerTest
-UserControllerTest
-```
-
-### Sécurité
-
-```text
-JwtAuthenticationFilterTest
-```
-
-### Exceptions
-
-```text
-GlobalExceptionHandlerTest
-```
-
-### Application
-
-```text
-BackendApplicationTests
-```
+ainsi que les contrôleurs correspondants et les composants de sécurité.
 
 ---
 
@@ -1021,6 +1222,12 @@ Windows :
 
 ```powershell
 .\mvnw.cmd test
+```
+
+Nettoyage + tests :
+
+```powershell
+.\mvnw.cmd clean test
 ```
 
 Tests des services :
@@ -1040,6 +1247,50 @@ Test spécifique :
 ```bash
 ./mvnw test -Dtest=CartServiceTest
 ```
+
+---
+
+# 🧪 Tests Postman
+
+Le parcours e-commerce principal a également été vérifié manuellement avec Postman.
+
+Le flux testé est :
+
+```text
+Register
+   ↓
+Login
+   ↓
+JWT
+   ↓
+Category
+   ↓
+Product
+   ↓
+Cart
+   ↓
+Order
+   ↓
+Stock
+   ↓
+Cart vidé
+   ↓
+Historique des commandes
+```
+
+Les tests Postman permettent notamment de vérifier :
+
+- l'authentification ;
+- la protection des endpoints ;
+- les rôles `ADMIN` / `CUSTOMER` ;
+- la création des catégories ;
+- la création des produits ;
+- l'ajout au panier ;
+- la modification du panier ;
+- la création d'une commande ;
+- la diminution du stock ;
+- le vidage du panier ;
+- la récupération des commandes.
 
 ---
 
@@ -1067,32 +1318,35 @@ Test spécifique :
 | PUT | `/api/cart/items/{cartItemId}` | Authentifié |
 | DELETE | `/api/cart/items/{cartItemId}` | Authentifié |
 | DELETE | `/api/cart` | Authentifié |
+| POST | `/api/orders` | Authentifié |
+| GET | `/api/orders` | Authentifié |
+| GET | `/api/orders/{orderId}` | Authentifié |
 
 ---
 
 # 🛣️ État actuel du projet
 
-## Authentification & sécurité
+## 🔐 Authentification & sécurité
 
 - [x] Inscription
 - [x] Connexion
 - [x] Hashage des mots de passe
 - [x] JWT
-- [x] JwtAuthenticationFilter
+- [x] `JwtAuthenticationFilter`
 - [x] Spring Security
 - [x] Rôles `ADMIN` / `CUSTOMER`
 - [x] Protection des endpoints
 - [x] Création d'administrateurs
 - [x] Protection au niveau des méthodes avec `@PreAuthorize`
 
-## Utilisateurs
+## 👤 Utilisateurs
 
 - [x] Consultation du profil
 - [x] Modification du profil
 - [x] Protection du profil
 - [x] Gestion des rôles
 
-## Catalogue
+## 📦 Catalogue
 
 - [x] CRUD catégories
 - [x] CRUD produits
@@ -1103,7 +1357,7 @@ Test spécifique :
 - [x] Suppression de l'image lors de la suppression du produit
 - [x] Gestion globale des exceptions
 
-## Panier
+## 🛒 Panier
 
 - [x] Création automatique du panier
 - [x] Consultation du panier
@@ -1117,16 +1371,35 @@ Test spécifique :
 - [x] Vérification de la propriété des articles
 - [x] Transaction lors du vidage
 
-## Infrastructure
+## 📦 Commandes
+
+- [x] `Order`
+- [x] `OrderItem`
+- [x] `OrderStatus`
+- [x] `OrderRepository`
+- [x] `OrderItemRepository`
+- [x] Création d'une commande depuis le panier
+- [x] Vérification du panier
+- [x] Vérification du stock
+- [x] Calcul du total côté serveur
+- [x] Conservation du prix historique
+- [x] Décrémentation du stock
+- [x] Vidage du panier après commande
+- [x] Historique des commandes
+- [x] Consultation d'une commande
+- [x] Protection des commandes par utilisateur
+- [x] Transaction lors du checkout
+- [x] Tests Postman du parcours complet
+
+## 🏗️ Infrastructure
 
 - [x] PostgreSQL / Supabase
 - [x] Supabase Storage
 - [x] Variables d'environnement
 - [x] Dockerisation
 - [x] Configuration du port dynamique
-- [ ] Harmonisation Java Maven / Docker
 
-## Tests
+## 🧪 Tests
 
 - [x] Tests des services
 - [x] Tests des contrôleurs
@@ -1134,33 +1407,62 @@ Test spécifique :
 - [x] Tests du filtre JWT
 - [x] Tests du gestionnaire d'exceptions
 - [x] Test de démarrage Spring Boot
+- [x] Tests Postman du parcours e-commerce
 - [ ] Tests d'intégration complets
 - [ ] Tests end-to-end
 
 ---
 
-# 🛒 Fonctionnalités e-commerce à développer
+# 💳 Fonctionnalités e-commerce restantes
 
-Les fonctionnalités suivantes ne sont **pas encore implémentées** dans le backend actuel :
+Les prochaines fonctionnalités sont :
 
-- [ ] Gestion avancée du stock
-- [ ] Commandes
-- [ ] `Order`
-- [ ] `OrderItem`
-- [ ] Passage du panier vers une commande
-- [ ] Historique des commandes
-- [ ] Statuts des commandes
-- [ ] Paiement
+- [ ] Intégration d'un agrégateur de paiement
+- [ ] Gestion du paiement
+- [ ] Webhooks de paiement
 - [ ] Gestion des adresses de livraison
 - [ ] Gestion de la livraison
 - [ ] Annulation de commande
 - [ ] Remboursement
+- [ ] Gestion avancée du stock
+- [ ] Gestion des échecs de paiement
+
+---
+
+# 🤖 Évolution possible avec OpenAI
+
+Une intégration OpenAI pourra être ajoutée ultérieurement au backend.
+
+Les fonctionnalités possibles sont notamment :
+
+- assistant shopping ;
+- recherche intelligente de produits ;
+- recommandations de produits ;
+- génération de descriptions produits ;
+- support client.
+
+L'intégration devra être effectuée côté backend afin de protéger les clés API et de contrôler les données envoyées au modèle.
+
+Architecture possible :
+
+```text
+Frontend
+   ↓
+Spring Boot
+   ↓
+OpenAI
+   ↓
+Recherche / Catalogue
+   ↓
+PostgreSQL
+```
+
+L'IA ne devra pas inventer les informations du catalogue. Les prix, stocks et informations produits devront continuer à provenir de la base de données.
 
 ---
 
 # 🔒 Améliorations techniques prévues
 
-- [ ] Harmoniser Java 17 / Java 25
 - [ ] Sécuriser davantage les uploads
 - [ ] Vérifier les types MIME des images
 - [ ] Limiter la taille des fichiers
@@ -1172,6 +1474,7 @@ Les fonctionnalités suivantes ne sont **pas encore implémentées** dans le bac
 - [ ] Ajouter une gestion structurée des logs
 - [ ] Améliorer la configuration de production
 - [ ] Ajouter une stratégie de migration de base de données
+- [ ] Améliorer la gestion de concurrence sur le stock
 
 ---
 
@@ -1179,7 +1482,7 @@ Les fonctionnalités suivantes ne sont **pas encore implémentées** dans le bac
 
 Le frontend OBVX n'est pas inclus dans ce dépôt.
 
-Il devra consommer l'API REST du backend pour :
+Il pourra maintenant consommer l'API REST du backend pour :
 
 - l'inscription ;
 - la connexion ;
@@ -1187,18 +1490,22 @@ Il devra consommer l'API REST du backend pour :
 - l'affichage des catégories ;
 - l'affichage des produits ;
 - la gestion du panier ;
+- la création des commandes ;
+- l'historique des commandes ;
+- la consultation du détail d'une commande ;
 - la gestion du profil ;
 - les fonctionnalités administrateur.
 
+Le paiement pourra être intégré ultérieurement sans bloquer le développement du frontend.
+
 ---
 
-# 📈 Évolution prévue du backend
-
-L'évolution du backend suivra progressivement cette architecture :
+# 📈 Architecture fonctionnelle
 
 ```text
                     ┌──────────────┐
                     │   Frontend   │
+                    │    OBVX      │
                     └──────┬───────┘
                            │
                            ▼
@@ -1207,28 +1514,79 @@ L'évolution du backend suivra progressivement cette architecture :
                     │ Spring Boot  │
                     └──────┬───────┘
                            │
-          ┌────────────────┼────────────────┐
-          │                │                │
-          ▼                ▼                ▼
-   Authentication      Catalogue         Panier
-       JWT             Products           Cart
-       Users           Category         CartItem
-          │                │                │
-          └────────────────┼────────────────┘
-                           ▼
-                    ┌──────────────┐
-                    │ PostgreSQL   │
-                    │  Supabase    │
-                    └──────────────┘
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+ Authentication        Catalogue             Cart
+ JWT / Users          Products / Category   CartItem
+        │                  │                  │
+        └──────────────────┼──────────────────┘
                            │
                            ▼
-                    ┌──────────────┐
-                    │   Supabase   │
-                    │   Storage    │
-                    └──────────────┘
+                         Order
+                           │
+                 ┌─────────┴─────────┐
+                 │                   │
+                 ▼                   ▼
+              Payment            Delivery
+              (à venir)          (à venir)
+                 │
+                 ▼
+          PostgreSQL / Supabase
+                 │
+                 ▼
+          Supabase Storage
 ```
 
-La prochaine grande étape fonctionnelle sera l'ajout du système de **commandes**, puis la gestion du stock, du paiement et du cycle de vie d'une commande.
+---
+
+# 🔄 Parcours e-commerce actuel
+
+Le parcours fonctionnel actuellement disponible est :
+
+```text
+┌──────────────┐
+│ Registration │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│    Login     │
+│     JWT      │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│  Catalogue   │
+│ Products     │
+│ Categories   │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│     Cart     │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│    Order     │
+│  Checkout    │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│ Stock check  │
+│ Stock update │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│ Cart cleared │
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│ Order history│
+└──────┬───────┘
+       ↓
+┌──────────────┐
+│   Payment    │
+│   À VENIR    │
+└──────────────┘
+```
 
 ---
 

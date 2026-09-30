@@ -161,7 +161,6 @@ public class CartService {
 
     @Transactional
     public CartResponse clearCart(User user) {
-
         Cart cart = cartRepository.findByUser(user)
                 .orElseThrow(() ->
                         new RessourceNotFoundException("Panier non trouvé")
@@ -169,6 +168,10 @@ public class CartService {
 
         cartItemRepository.deleteAllByCartId(cart.getId());
 
-        return getOrCreateCart(user);
+        return new CartResponse(
+                cart.getId(),
+                List.of(),
+                BigDecimal.ZERO
+        );
     }
 }
